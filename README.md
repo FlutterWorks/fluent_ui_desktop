@@ -15,11 +15,6 @@
     </a>
   </p>
   <p align="center">
-    <a title="Buy me a coffee" href="https://www.buymeacoffee.com/bdlukaa">
-      <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=bdlukaa&button_colour=FF5F5F&font_colour=ffffff&font_family=Lato&outline_colour=000000&coffee_colour=FFDD00">
-    </a>
-  </p>
-  <p align="center">
   Design beautiful native windows apps using Flutter
   </p>
 </div>
@@ -50,6 +45,7 @@ Unofficial implementation of Fluent UI for [Flutter](flutter.dev). It's written 
     - [App Bar](#app-bar)
     - [Navigation Pane](#navigation-pane)
     - [Navigation Body](#navigation-body)
+    - [InfoBadge](#info-badge)
   - [Tab View](#tab-view)
   - [Bottom Navigation](#bottom-navigation)
 - [Inputs](#inputs)
@@ -69,6 +65,7 @@ Unofficial implementation of Fluent UI for [Flutter](flutter.dev). It's written 
 - [Widgets](#widgets)
   - [Tooltip](#tooltip)
   - [Content Dialog](#content-dialog)
+  - [Expander](#expander)
   - [Flyout](#flyout)
   - **TODO** [Teaching tip]()
   - [Acrylic](#acrylic)
@@ -458,30 +455,25 @@ You can customize the selected indicator. By default `StickyNavigationIndicator`
 pane: NavigationPane(
   indicatorBuilder: ({
     required BuildContext context,
-    /// The current selected index
-    int? index,
-    /// A function that, when executed, returns the position of all the
-    /// PaneItems. This function must be called after the widget was
-    /// rendered at least once
-    required List<Offset> Function() offsets,
-    /// A function that, when executed, returns the size of all the
-    /// PaneItems. This function must be called after the widget was
-    /// rendered at least once
-    required List<Size> Function() sizes,
+    /// The navigation pane corresponding to this indicator
+    required NavigationPane pane,
     /// Corresponds to the current display mode. If top, Axis.vertical
     /// is passed, otherwise Axis.vertical
-    required Axis axis,
+    Axis? axis,
     /// Corresponds to the pane itself as a widget. The indicator is
     /// rendered over the whole pane.
     required Widget child,
   }) {
-    if (index == null) return child;
+    if (pane.selected == null) return child;
     assert(debugCheckHasFluentTheme(context));
     final theme = NavigationPaneThemeData.of(context);
+
+    axis??= Axis.horizontal;
+
     return EndNavigationIndicator(
-      index: index,
-      offsets: offsets,
-      sizes: sizes,
+      index: pane.selected,
+      offsets: () => pane.effectiveItems.getPaneItemsOffsets(pane.paneKey),
+      sizes: pane.effectiveItems.getPaneItemsSizes,
       child: child,
       color: theme.highlightColor,
       curve: theme.animationCurve ?? Curves.linear,
@@ -497,7 +489,7 @@ A navigation body is used to implement page transitions into a navigation view. 
 
 For top mode, the horizontal page transition is used. For the others, drill in page transition is used.
 
-You can also supply a builder function to create the pages instead of a list of widgets. For this use the `NavigationBody.builder` constructor. 
+You can also supply a builder function to create the pages instead of a list of widgets. For this use the `NavigationBody.builder` constructor.
 
 ```dart
 int _currentIndex = 0;
@@ -528,12 +520,43 @@ NavigationView(
 NavigationBody(
   index: _currentIndex,
   children: [
-    ScaffoldPage(
-      topBar: PageTopBar(header: Text('Your Songs'))
+    const ScaffoldPage(
+      topBar: PageHeader(header: Text('Your Songs'))
     )
   ],
 )
 ```
+
+### Info Badge
+
+Badging is a non-intrusive and intuitive way to display notifications or bring focus to an area within an app - whether that be for notifications, indicating new content, or showing an alert. An InfoBadge is a small piece of UI that can be added into an app and customized to display a number, icon, or a simple dot. [Learn more](https://docs.microsoft.com/en-us/windows/apps/design/controls/info-badge)
+
+![InfoBadge Preview](https://docs.microsoft.com/en-us/windows/apps/design/controls/images/infobadge/infobadge-example-1.png)
+
+Here's an example of how to add a info badge to a `PaneItem`:
+
+```dart
+NavigationView(
+  ...,
+  pane: NavigationPane(
+    ...
+    children: [
+      PaneItem(
+        icon: Icon(FluentIcons.more),
+        title: const Text('Others'),
+        infoBadge: const InfoBadge(
+          source: Text('9'),
+        ),
+      ),
+    ],
+  ),
+  ...
+)
+```
+
+| Open | Compact | Top |
+| ---- | ------- | --- |
+| ![Open InfoBadge Preview](https://docs.microsoft.com/en-us/windows/apps/design/controls/images/infobadge/navview-expanded.png) | ![Compact InfoBadge Preview](https://docs.microsoft.com/en-us/windows/apps/design/controls/images/infobadge/navview-compact.png) | ![Top InfoBadge Preview](https://docs.microsoft.com/en-us/windows/apps/design/controls/images/infobadge/navview-top.png) |
 
 ## Tab View
 
@@ -868,7 +891,6 @@ The code above produces the following:
 
 ![Slider Preview](https://docs.microsoft.com/en-us/windows/apps/design/controls/images/controls/slider.png)
 
-
 ### Choosing between vertical and horizontal sliders
 
 You can set `vertical` to `true` to create a vertical slider
@@ -1074,6 +1096,43 @@ showDialog(
 
 ![Delete File Dialog](https://docs.microsoft.com/en-us/windows/apps/design/controls/images/dialogs/dialog_rs2_delete_file.png)\
 ![Subscribe to App Service Dialog](https://docs.microsoft.com/en-us/windows/apps/design/controls/images/dialogs/dialog_rs2_three_button_default.png)\
+
+## Expander
+
+Expander lets you show or hide less important content that's related to a piece of primary content that's always visible. Items contained in the `header` are always visible. The user can expand and collapse the `content` area, where secondary content is displayed, by interacting with the header. When the content area is expanded, it pushes other UI elements out of the way; it does not overlay other UI. The Expander can expand upwards or downwards.
+
+Both the `header` and `content` areas can contain any content, from simple text to complex UI layouts. For example, you can use the control to show additional options for an item.
+
+![](https://docs.microsoft.com/en-us/windows/apps/design/controls/images/expander-default.gif)
+
+Use an Expander when some primary content should always be visible, but related secondary content may be hidden until needed. This UI is commonly used when display space is limited and when information or options can be grouped together. Hiding the secondary content until it's needed can also help to focus the user on the most important parts of your app.
+
+Here's an example of how to create an expander:
+
+```dart
+Expander(
+  header: const Text('This thext is in header'),
+  content: const Text('This is the content'),
+  direction: ExpanderDirection.down, // (optional). Defaults to ExpanderDirection.down
+  initiallyExpanded: false, // (false). Defaults to false
+),
+```
+
+Open and close the expander programatically:
+
+```dart
+final _expanderKey = GlobalKey<ExpanderState>();
+
+Expander(
+  header: const Text('This thext is in header'),
+  content: const Text('This is the content'),
+),
+
+// Call this function to close the expander
+void close() {
+  _expanderKey.currentState?.open = false;
+}
+```
 
 ## Flyout
 
@@ -1486,6 +1545,7 @@ The list of equivalents between this library and `flutter/material.dart`
 | Chip                      | Chip             |
 | Snackbar                  | Snackbar         |
 | -                         | PillButtonBar    |
+| ExpansionPanel            | Expander         |
 
 ## Contribution
 

@@ -1,6 +1,32 @@
 Date format: DD/MM/YYYY
 
-## [3.3.0] - [DD/10/2021]
+## [3.5.0] - Flutter 2.8 - [09/12/2021]
+
+- **BREAKING** Minimal Flutter version is now 2.8
+- `NavigationAppBar.backgroundColor` is now applied correctly. ([#100](https://github.com/bdlukaa/fluent_ui/issues/100))
+- ComboBox's Popup Acrylic can now be disabled if wrapped in a `DisableAcrylic` ([#105](https://github.com/bdlukaa/fluent_ui/issues/105))
+- `NavigationPane` width can now be customizable ([#99](https://github.com/bdlukaa/fluent_ui/issues/99)) 
+- Implement `PaneItemAction` for `NavigationPane` ([#104](https://github.com/bdlukaa/fluent_ui/issues/104))
+
+## [3.4.1] - [08/11/2021]
+
+- `ContentDialog` constraints can now be customizable ([#86](https://github.com/bdlukaa/fluent_ui/issues/86))
+- Add possibility to disable acrylic by wrapping it in a `DisableAcrylic` ([#89](https://github.com/bdlukaa/fluent_ui/issues/89))
+- Fix `onReaorder null exception` ([#88](https://github.com/bdlukaa/fluent_ui/issues/88))
+- Implement `InfoBadge`
+- Implement `Expander` ([#85](https://github.com/bdlukaa/fluent_ui/issues/85))
+- Default `inputMouseCursor` is now `MouseCursor.defer`
+- `NavigationView.contentShape` is now rendered at the foreground
+
+## [3.4.0] - Flexibility - [22/10/2021]
+
+- `ProgressRing` now spins on the correct direction ([#83](https://github.com/bdlukaa/fluent_ui/issues/83))
+- Added the `backwards` property to `ProgressRing`
+- `FluentApp.builder` now works as expected ([#84](https://github.com/bdlukaa/fluent_ui/issues/84))
+- Implemented `NavigationPane.customPane`, which now gives you the ability to create custom panes for `NavigationView`
+- **BREAKING** `sizes`, `offsets` and `index` parameters from `NavigationIndicatorBuilder` were replaced by `pane`
+
+## [3.3.0] - [12/10/2021]
 
 - Back button now isn't forced when using top navigation mode ([#74](https://github.com/bdlukaa/fluent_ui/issues/74))
 - `PilButtonBar` now accept 2 items ([#66](https://github.com/bdlukaa/fluent_ui/issues/66))

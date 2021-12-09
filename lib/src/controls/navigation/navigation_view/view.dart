@@ -8,6 +8,7 @@ import 'package:flutter/rendering.dart';
 
 part 'body.dart';
 part 'indicators.dart';
+part 'pane_items.dart';
 part 'pane.dart';
 part 'style.dart';
 
@@ -15,13 +16,6 @@ part 'style.dart';
 ///
 /// Value eyeballed from Windows 10 v10.0.19041.928
 const double _kDefaultAppBarHeight = 50.0;
-
-const ShapeBorder kDefaultContentClipper = RoundedRectangleBorder(
-  side: BorderSide(width: 0.8, color: Colors.black),
-  borderRadius: BorderRadius.only(
-    topLeft: Radius.circular(8.0),
-  ),
-);
 
 /// The NavigationView control provides top-level navigation
 /// for your app. It adapts to a variety of screen sizes and
@@ -45,7 +39,7 @@ class NavigationView extends StatefulWidget {
     this.pane,
     this.content = const SizedBox.shrink(),
     this.clipBehavior = Clip.antiAlias,
-    this.contentShape = kDefaultContentClipper,
+    this.contentShape,
     // If more properties are added here, make sure to
     // add them to the automatic mode as well.
   }) : super(key: key);
@@ -71,7 +65,7 @@ class NavigationView extends StatefulWidget {
   ///
   /// The content is not clipped on when [PaneDisplayMode.displayMode]
   /// is [PaneDisplayMode.minimal]
-  final ShapeBorder contentShape;
+  final ShapeBorder? contentShape;
 
   static NavigationViewState of(BuildContext context) {
     return context.findAncestorStateOfType<NavigationViewState>()!;
@@ -100,6 +94,7 @@ class NavigationViewState extends State<NavigationView> {
   /// The key used to animate between open and compact display mode
   final _panelKey = GlobalKey();
   final _listKey = GlobalKey();
+  final _scrollbarKey = GlobalKey();
 
   /// The overlay entry used for minimal pane
   OverlayEntry? minimalOverlayEntry;
@@ -172,7 +167,21 @@ class NavigationViewState extends State<NavigationView> {
         late Widget paneResult;
         if (widget.pane != null) {
           final pane = widget.pane!;
-          if (pane.displayMode == PaneDisplayMode.auto) {
+          if (pane.customPane != null) {
+            paneResult = Builder(builder: (context) {
+              return pane.customPane!.build(
+                context,
+                NavigationPaneWidgetData(
+                  appBar: appBar,
+                  content: ClipRect(child: widget.content),
+                  listKey: _listKey,
+                  paneKey: _panelKey,
+                  scrollController: scrollController,
+                  pane: pane,
+                ),
+              );
+            });
+          } else if (pane.displayMode == PaneDisplayMode.auto) {
             /// For more info on the adaptive behavior, see
             /// https://docs.microsoft.com/en-us/windows/uwp/design/controls-and-patterns/navigationview#adaptive-behavior
             ///
@@ -210,6 +219,7 @@ class NavigationViewState extends State<NavigationView> {
                 autoSuggestBox: pane.autoSuggestBox,
                 autoSuggestBoxReplacement: pane.autoSuggestBoxReplacement,
                 footerItems: pane.footerItems,
+                size: pane.size,
                 header: pane.header,
                 items: pane.items,
                 key: pane.key,
@@ -221,16 +231,33 @@ class NavigationViewState extends State<NavigationView> {
               ),
             );
           } else {
-            final Widget content = pane.displayMode == PaneDisplayMode.minimal
-                ? widget.content
-                : DecoratedBox(
-                    decoration: ShapeDecoration(shape: widget.contentShape),
-                    child: ClipPath(
-                      clipBehavior: widget.clipBehavior,
-                      clipper: ShapeBorderClipper(shape: widget.contentShape),
-                      child: widget.content,
+            final contentShape = widget.contentShape ??
+                RoundedRectangleBorder(
+                  side: BorderSide(
+                    width: 0.3,
+                    color: FluentTheme.of(context).brightness.isDark
+                        ? Colors.black
+                        : const Color(0xffBCBCBC),
+                  ),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(8.0),
+                  ),
+                );
+            final Widget content = ClipRect(
+              child: pane.displayMode == PaneDisplayMode.minimal
+                  ? widget.content
+                  : DecoratedBox(
+                      position: DecorationPosition.foreground,
+                      decoration: ShapeDecoration(
+                        shape: contentShape,
+                      ),
+                      child: ClipPath(
+                        clipBehavior: widget.clipBehavior,
+                        clipper: ShapeBorderClipper(shape: contentShape),
+                        child: widget.content,
+                      ),
                     ),
-                  );
+            );
             if (pane.displayMode != PaneDisplayMode.compact) {
               _compactOverlayOpen = false;
             }
@@ -243,6 +270,7 @@ class NavigationViewState extends State<NavigationView> {
                     child: _TopNavigationPane(
                       pane: pane,
                       listKey: _listKey,
+                      scrollbarKey: _scrollbarKey,
                       appBar: widget.appBar,
                     ),
                   ),
@@ -256,10 +284,11 @@ class NavigationViewState extends State<NavigationView> {
                 paneResult = Stack(children: [
                   Positioned(
                     top: widget.appBar?.height ?? 0.0,
-                    left: _kCompactNavigationPanelWidth,
+                    left: pane.size?.compactWidth ??
+                        _kCompactNavigationPanelWidth,
                     right: 0,
                     bottom: 0,
-                    child: ClipRect(child: content),
+                    child: content,
                   ),
                   if (_compactOverlayOpen)
                     Positioned.fill(
@@ -293,6 +322,7 @@ class NavigationViewState extends State<NavigationView> {
                                 pane: pane,
                                 paneKey: _panelKey,
                                 listKey: _listKey,
+                                scrollbarKey: _scrollbarKey,
                                 onToggle: toggleCompactOpenMode,
                                 onItemSelected: toggleCompactOpenMode,
                               ),
@@ -306,6 +336,7 @@ class NavigationViewState extends State<NavigationView> {
                                 pane: pane,
                                 paneKey: _panelKey,
                                 listKey: _listKey,
+                                scrollbarKey: _scrollbarKey,
                                 onToggle: toggleCompactOpenMode,
                               ),
                             ),
@@ -325,9 +356,10 @@ class NavigationViewState extends State<NavigationView> {
                           pane: pane,
                           paneKey: _panelKey,
                           listKey: _listKey,
+                          scrollbarKey: _scrollbarKey,
                         ),
                       ),
-                      Expanded(child: ClipRect(child: content)),
+                      Expanded(child: content),
                     ]),
                   ),
                 ]);
@@ -339,7 +371,7 @@ class NavigationViewState extends State<NavigationView> {
                     left: 0.0,
                     right: 0.0,
                     bottom: 0.0,
-                    child: ClipRect(child: content),
+                    child: content,
                   ),
                   if (_minimalPaneOpen)
                     Positioned.fill(
@@ -380,6 +412,7 @@ class NavigationViewState extends State<NavigationView> {
                             pane: pane,
                             paneKey: _panelKey,
                             listKey: _listKey,
+                            scrollbarKey: _scrollbarKey,
                             onItemSelected: () {
                               setState(() => _minimalPaneOpen = false);
                             },
@@ -452,8 +485,7 @@ class NavigationAppBar with Diagnosticable {
   /// The height of the app bar. [_kDefaultAppBarHeight] is used by default
   final double height;
 
-  /// The background color. If null, [ThemeData.scaffoldBackgroundColor] is
-  /// used.
+  /// The background color of this app bar.
   final Color? backgroundColor;
 
   /// Creates an app bar
@@ -625,6 +657,10 @@ class _NavigationAppBar extends StatelessWidget {
       default:
         return const SizedBox.shrink();
     }
-    return SizedBox(height: appBar.height, child: result);
+    return Container(
+      color: appBar.backgroundColor,
+      height: appBar.height,
+      child: result,
+    );
   }
 }

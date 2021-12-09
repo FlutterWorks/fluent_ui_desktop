@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:system_theme/system_theme.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart' as flutter_acrylic;
+import 'package:url_launcher/url_launcher.dart';
 import 'package:url_strategy/url_strategy.dart';
 
 import 'screens/colors.dart';
@@ -152,6 +153,11 @@ class _MyHomePageState extends State<MyHomePage> {
       pane: NavigationPane(
         selected: index,
         onChanged: (i) => setState(() => index = i),
+        size: NavigationPaneSize(
+          openWidth: MediaQuery.of(context).size.width / 5,
+          openMinWidth: 250,
+          openMaxWidth: 320,
+        ),
         header: Container(
           height: kOneLineTileHeight,
           padding: const EdgeInsets.symmetric(horizontal: 10.0),
@@ -163,21 +169,21 @@ class _MyHomePageState extends State<MyHomePage> {
         displayMode: appTheme.displayMode,
         indicatorBuilder: ({
           required BuildContext context,
-          int? index,
-          required List<Offset> Function() offsets,
-          required List<Size> Function() sizes,
-          required Axis axis,
+          required NavigationPane pane,
+          Axis? axis,
           required Widget child,
         }) {
-          if (index == null) return child;
+          if (pane.selected == null) return child;
+          axis ??= Axis.horizontal;
           assert(debugCheckHasFluentTheme(context));
           final theme = NavigationPaneTheme.of(context);
           switch (appTheme.indicator) {
             case NavigationIndicators.end:
               return EndNavigationIndicator(
-                index: index,
-                offsets: offsets,
-                sizes: sizes,
+                index: pane.selected!,
+                offsets: () =>
+                    pane.effectiveItems.getPaneItemsOffsets(pane.paneKey),
+                sizes: pane.effectiveItems.getPaneItemsSizes,
                 child: child,
                 color: theme.highlightColor,
                 curve: theme.animationCurve ?? Curves.linear,
@@ -185,18 +191,17 @@ class _MyHomePageState extends State<MyHomePage> {
               );
             case NavigationIndicators.sticky:
               return NavigationPane.defaultNavigationIndicator(
-                index: index,
                 context: context,
-                offsets: offsets,
-                sizes: sizes,
                 axis: axis,
+                pane: pane,
                 child: child,
               );
             default:
               return NavigationIndicator(
-                index: index,
-                offsets: offsets,
-                sizes: sizes,
+                index: pane.selected!,
+                offsets: () =>
+                    pane.effectiveItems.getPaneItemsOffsets(pane.paneKey),
+                sizes: pane.effectiveItems.getPaneItemsSizes,
                 child: child,
                 color: theme.highlightColor,
                 curve: theme.animationCurve ?? Curves.linear,
@@ -225,8 +230,9 @@ class _MyHomePageState extends State<MyHomePage> {
             title: const Text('Typography'),
           ),
           PaneItem(
-              icon: const Icon(FluentIcons.cell_phone),
-              title: const Text('Mobile')),
+            icon: const Icon(FluentIcons.cell_phone),
+            title: const Text('Mobile'),
+          ),
           PaneItem(
             icon: Icon(
               appTheme.displayMode == PaneDisplayMode.top
@@ -234,6 +240,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   : FluentIcons.more_vertical,
             ),
             title: const Text('Others'),
+            infoBadge: const InfoBadge(
+              source: Text('9'),
+            ),
           ),
         ],
         autoSuggestBox: AutoSuggestBox<String>(
@@ -244,8 +253,16 @@ class _MyHomePageState extends State<MyHomePage> {
         footerItems: [
           PaneItemSeparator(),
           PaneItem(
-              icon: const Icon(FluentIcons.settings),
-              title: const Text('Settings')),
+            icon: const Icon(FluentIcons.settings),
+            title: const Text('Settings'),
+          ),
+          PaneItemAction(
+            icon: const Icon(FluentIcons.open_source),
+            title: const Text('Source code'),
+            onTap: () {
+              launch('https://github.com/bdlukaa/fluent_ui');
+            },
+          ),
         ],
       ),
       content: NavigationBody(index: index, children: [
