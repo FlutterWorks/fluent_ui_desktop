@@ -2,6 +2,8 @@
 
 import 'package:fluent_ui/fluent_ui.dart';
 
+import 'package:email_validator/email_validator.dart';
+
 class Forms extends StatefulWidget {
   const Forms({Key? key}) : super(key: key);
 
@@ -10,12 +12,25 @@ class Forms extends StatefulWidget {
 }
 
 class _FormsState extends State<Forms> {
-  final autoSuggestBox = TextEditingController();
-
   final _clearController = TextEditingController();
   bool _showPassword = false;
 
-  final values = ['Blue', 'Green', 'Yellow', 'Red'];
+  static const values = <String>[
+    'Red',
+    'Yellow',
+    'Green',
+    'Cyan',
+    'Blue',
+    'Magenta',
+    'Orange',
+    'Violet',
+    'Pink',
+    'Brown',
+    'Purple',
+    'Gray',
+    'Black',
+    'White',
+  ];
   String? comboBoxValue;
 
   DateTime date = DateTime.now();
@@ -31,9 +46,19 @@ class _FormsState extends State<Forms> {
           right: PageHeader.horizontalPadding(context),
         ),
         children: [
-          const TextBox(
+          TextFormBox(
             header: 'Email',
             placeholder: 'Type your email here :)',
+            autovalidateMode: AutovalidateMode.always,
+            validator: (text) {
+              if (text == null || text.isEmpty) return 'Provide an email';
+              if (!EmailValidator.validate(text)) return 'Email not valid';
+            },
+            textInputAction: TextInputAction.next,
+            prefix: const Padding(
+              padding: EdgeInsets.only(left: 8.0),
+              child: Icon(FluentIcons.edit_mail),
+            ),
           ),
           const SizedBox(height: 20),
           Row(children: [
@@ -52,29 +77,17 @@ class _FormsState extends State<Forms> {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: AutoSuggestBox<String>(
-                controller: autoSuggestBox,
+              child: AutoSuggestBox(
                 items: values,
+                placeholder: 'Pick a color',
+                trailingIcon: IconButton(
+                  icon: const Icon(FluentIcons.search),
+                  onPressed: () {
+                    debugPrint('trailing button pressed');
+                  },
+                ),
                 onSelected: (text) {
                   print(text);
-                },
-                textBoxBuilder: (context, controller, focusNode, key) {
-                  return TextBox(
-                    key: key,
-                    controller: controller,
-                    focusNode: focusNode,
-                    suffixMode: OverlayVisibilityMode.editing,
-                    suffix: IconButton(
-                      icon: const Icon(FluentIcons.close),
-                      onPressed: () {
-                        controller.clear();
-                        focusNode.unfocus();
-                      },
-                    ),
-                    placeholder: 'Type a color',
-                    clipBehavior:
-                        focusNode.hasFocus ? Clip.none : Clip.antiAlias,
-                  );
                 },
               ),
             ),
@@ -86,7 +99,7 @@ class _FormsState extends State<Forms> {
             suffixMode: OverlayVisibilityMode.always,
             minHeight: 100,
             suffix: IconButton(
-              icon: const Icon(FluentIcons.close),
+              icon: const Icon(FluentIcons.chrome_close),
               onPressed: () {
                 _clearController.clear();
               },

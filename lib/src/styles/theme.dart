@@ -166,6 +166,9 @@ class ThemeData with Diagnosticable {
   final Color inactiveBackgroundColor;
   final Color disabledColor;
   final Color shadowColor;
+  final Color uncheckedColor;
+  final Color checkedColor;
+  final Color borderInputColor;
   final Color scaffoldBackgroundColor;
   final Color acrylicBackgroundColor;
   final Color micaBackgroundColor;
@@ -175,12 +178,6 @@ class ThemeData with Diagnosticable {
   final Duration mediumAnimationDuration;
   final Duration slowAnimationDuration;
   final Curve animationCurve;
-
-  /// The mouse cursor used by many inputs, such as [Button],
-  /// [RadioButton] and [ToggleSwitch]. By default, if the
-  /// state is pressing or hovering, [SystemMouseCursors.click]
-  /// is used, otherwise [MouseCursor.defer] is used.
-  final ButtonState<MouseCursor> inputMouseCursor;
 
   final Brightness brightness;
   final VisualDensity visualDensity;
@@ -215,6 +212,9 @@ class ThemeData with Diagnosticable {
     required this.inactiveBackgroundColor,
     required this.disabledColor,
     required this.shadowColor,
+    required this.uncheckedColor,
+    required this.checkedColor,
+    required this.borderInputColor,
     required this.fasterAnimationDuration,
     required this.fastAnimationDuration,
     required this.mediumAnimationDuration,
@@ -242,7 +242,6 @@ class ThemeData with Diagnosticable {
     required this.infoBarTheme,
     required this.focusTheme,
     required this.scrollbarTheme,
-    required this.inputMouseCursor,
     required this.snackbarTheme,
     required this.pillButtonBarTheme,
     required this.bottomSheetTheme,
@@ -270,7 +269,9 @@ class ThemeData with Diagnosticable {
     Color? acrylicBackgroundColor,
     Color? micaBackgroundColor,
     Color? shadowColor,
-    ButtonState<MouseCursor>? inputMouseCursor,
+    Color? uncheckedColor,
+    Color? checkedColor,
+    Color? borderInputColor,
     Duration? fasterAnimationDuration,
     Duration? fastAnimationDuration,
     Duration? mediumAnimationDuration,
@@ -322,15 +323,16 @@ class ThemeData with Diagnosticable {
         : const Color(0x7F1e1e1e);
     micaBackgroundColor ??=
         isLight ? const Color(0xFFf3f3f3) : const Color(0xFF202020);
+    uncheckedColor ??= isLight
+        ? const Color.fromRGBO(0, 0, 0, 0.6063)
+        : const Color.fromRGBO(255, 255, 255, 0.786);
+    checkedColor ??= isLight ? Colors.white : Colors.black;
+    borderInputColor ??= isLight
+        ? const Color.fromRGBO(0, 0, 0, 0.4458)
+        : const Color.fromRGBO(255, 255, 255, 0.5442);
     typography = Typography.standard(brightness: brightness)
         .merge(typography)
         .apply(fontFamily: fontFamily);
-    inputMouseCursor ??= ButtonState.resolveWith((states) {
-      // if (states.isHovering || states.isPressing) {
-      //   return SystemMouseCursors.click;
-      // }
-      return MouseCursor.defer;
-    });
     focusTheme = FocusThemeData.standard(
       glowColor: accentColor.withOpacity(0.15),
       primaryBorderColor: inactiveColor,
@@ -354,7 +356,6 @@ class ThemeData with Diagnosticable {
       backgroundColor: micaBackgroundColor,
       disabledColor: disabledColor,
       highlightColor: accentColor,
-      inputMouseCursor: inputMouseCursor,
       typography: typography,
       inactiveColor: inactiveColor,
     );
@@ -383,6 +384,9 @@ class ThemeData with Diagnosticable {
       acrylicBackgroundColor: acrylicBackgroundColor,
       micaBackgroundColor: micaBackgroundColor,
       shadowColor: shadowColor,
+      uncheckedColor: uncheckedColor,
+      checkedColor: checkedColor,
+      borderInputColor: borderInputColor,
       bottomNavigationTheme: bottomNavigationTheme,
       buttonTheme: buttonTheme,
       checkboxTheme: checkboxTheme,
@@ -401,7 +405,6 @@ class ThemeData with Diagnosticable {
       toggleSwitchTheme: toggleSwitchTheme,
       tooltipTheme: tooltipTheme,
       typography: typography,
-      inputMouseCursor: inputMouseCursor,
       snackbarTheme: snackbarTheme,
       pillButtonBarTheme: pillButtonBarTheme,
       bottomSheetTheme: bottomSheetTheme,
@@ -426,6 +429,9 @@ class ThemeData with Diagnosticable {
       micaBackgroundColor:
           Color.lerp(a.micaBackgroundColor, b.micaBackgroundColor, t)!,
       shadowColor: Color.lerp(a.shadowColor, b.shadowColor, t)!,
+      uncheckedColor: Color.lerp(a.uncheckedColor, b.uncheckedColor, t)!,
+      checkedColor: Color.lerp(a.checkedColor, b.checkedColor, t)!,
+      borderInputColor: Color.lerp(a.borderInputColor, b.borderInputColor, t)!,
       fasterAnimationDuration:
           lerpDuration(a.fasterAnimationDuration, b.fasterAnimationDuration, t),
       fastAnimationDuration:
@@ -435,7 +441,6 @@ class ThemeData with Diagnosticable {
       slowAnimationDuration:
           lerpDuration(a.slowAnimationDuration, b.slowAnimationDuration, t),
       animationCurve: t < 0.5 ? a.animationCurve : b.animationCurve,
-      inputMouseCursor: t < 0.5 ? a.inputMouseCursor : b.inputMouseCursor,
       buttonTheme: ButtonThemeData.lerp(a.buttonTheme, b.buttonTheme, t),
       checkboxTheme:
           CheckboxThemeData.lerp(a.checkboxTheme, b.checkboxTheme, t),
@@ -483,12 +488,14 @@ class ThemeData with Diagnosticable {
     Color? acrylicBackgroundColor,
     Color? micaBackgroundColor,
     Color? shadowColor,
+    Color? uncheckedColor,
+    Color? checkedColor,
+    Color? borderInputColor,
     Duration? fasterAnimationDuration,
     Duration? fastAnimationDuration,
     Duration? mediumAnimationDuration,
     Duration? slowAnimationDuration,
     Curve? animationCurve,
-    ButtonState<MouseCursor>? inputMouseCursor,
     ButtonThemeData? buttonTheme,
     BottomNavigationThemeData? bottomNavigationTheme,
     BottomSheetThemeData? bottomSheetTheme,
@@ -518,6 +525,9 @@ class ThemeData with Diagnosticable {
       activeColor: activeColor ?? this.activeColor,
       inactiveColor: inactiveColor ?? this.inactiveColor,
       shadowColor: shadowColor ?? this.shadowColor,
+      uncheckedColor: uncheckedColor ?? this.uncheckedColor,
+      checkedColor: checkedColor ?? this.checkedColor,
+      borderInputColor: borderInputColor ?? this.borderInputColor,
       inactiveBackgroundColor:
           inactiveBackgroundColor ?? this.inactiveBackgroundColor,
       disabledColor: disabledColor ?? this.disabledColor,
@@ -534,7 +544,6 @@ class ThemeData with Diagnosticable {
           mediumAnimationDuration ?? this.mediumAnimationDuration,
       slowAnimationDuration:
           slowAnimationDuration ?? this.slowAnimationDuration,
-      inputMouseCursor: inputMouseCursor ?? this.inputMouseCursor,
       animationCurve: animationCurve ?? this.animationCurve,
       buttonTheme: this.buttonTheme.merge(buttonTheme),
       bottomNavigationTheme:

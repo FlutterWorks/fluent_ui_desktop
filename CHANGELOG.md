@@ -1,5 +1,73 @@
 Date format: DD/MM/YYYY
 
+## [3.7.0] - Breaking changes - [12/01/2022]
+
+- AutoSuggestBox: ([#130](https://github.com/bdlukaa/fluent_ui/pull/130))
+  - It gets opened automatically when it gets focus
+  - When an item is tapped, the cursor is positioned correctly at the end of the text
+  - **BREAKING** Now it's not possible to assign a type to `AutoSuggestBox`:
+    Before:
+    ```dart
+    AutoSuggestBox<String>(...),
+    ```
+    Now:
+    ```dart
+    AutoSuggestBox(...),
+    ```
+- Added TextFormBox witch integrates with the Form widget. It has the ability to be validated and to show an error message.
+- New FluentIcons gallery showcase in example project ([#123](https://github.com/bdlukaa/fluent_ui/issues/123))
+- Updated FluentIcons as per 30/12/2021
+- **BREAKING** Renamed `FluentIcons.close` to `FluentIcons.chrome_close`
+- Fixed rounded corners on the ComboBox widget
+
+## [3.6.1] - [27/12/2021]
+
+- Fixed missing padding before close button on `TabView` ([#122](https://github.com/bdlukaa/fluent_ui/issues/122))
+- Readded tab minimal size for `equal` and `sizeToContent` tab width behaviours ([#122](https://github.com/bdlukaa/fluent_ui/issues/122))
+- `TabView`'s close button now uses `SmallIconButton`
+- If a tab is partially off the view, it's scrolled until it's visible
+- Fix `IconButton`'s icon size
+- Update `OutlinedButton`, `FilledButton` and `TextButton` styles
+
+## [3.6.0] - TabView Update - [25/12/2021]
+
+- Implement `TreeView` ([#120](https://github.com/bdlukaa/fluent_ui/pull/120))
+- Fix `Tooltip.useMousePosition`
+- Fix `Slider` and `RatingBar` ([#116](https://github.com/bdlukaa/fluent_ui/issues/116))
+- Fix scroll buttons when there are too many tabs in `TabView` ([#92](https://github.com/bdlukaa/fluent_ui/issues/92))
+- Fix button style on tab in `TabView` ([#90](https://github.com/bdlukaa/fluent_ui/issues/90))
+- Added *Close on middle click* on tabs in `TabView` ([#91](https://github.com/bdlukaa/fluent_ui/issues/91))
+- Added `newTabLabel`, `closeTabLabel`, `scrollTabBackward`, `scrollTabForward` to `FluentLocalizations`
+- Fix `TabView`'s text when it's too long. Now it's clipped when overflow and line doesn't break
+- Added `TabView.closeButtonVisibility`. Defaults to `CloseButtonVisibilityMode.always`
+- Updated selected tab paint
+- Added `TabView.tabWidthBehavior`. Defaults to `TabWidthBehavior.equal`
+- Added `TabView.header` and `TabView.footer`
+- `Slider`'s mouse cursor is now [MouseCursor.defer]
+- Added `SmallIconButton`, which makes an [IconButton] small if wrapped. It's used by `TextBox`
+- Added `ButtonStyle.iconSize`
+- **BREAKING** `AutoSuggestBox` updates:
+  - Added `FluentLocalizations.noResultsFoundLabel`. "No results found" is the default text
+  - Removed `itemBuilder`, `sorter`, `noResultsFound`, `textBoxBuilder`, `defaultNoResultsFound` and `defaultTextBoxBuilder`
+  - Added `onChanged`, `trailingIcon`, `clearButtonEnabled` and `placeholder`
+  - `controller` is now nullable. If null, an internal controller is creted
+
+## [3.5.2] - [17/12/2021]
+
+- **BREAKING** Removed `ThemeData.inputMouseCursor`
+- **BREAKING** Removed `cursor` from `DatePicker`, `TimePicker`, `ButtonStyle`, `CheckboxThemeData`, `RadioButtonThemeData`, `SliderThemeData`, `ToggleSwitchThemeData`, `NavigationPaneThemeData`
+- Scrollbar is not longer shown if `PaneDisplayMode` is `top`
+- If open the compact pane, it's not always a overlay
+- Added `triggerMode` and `enableFeedback` to `Tooltip`.
+- Added `Tooltip.dismissAllToolTips`
+
+## [3.5.1] - [15/12/2021]
+
+- Update inputs colors
+- `Expander` now properly disposes its resources
+- Add the `borderRadius` and `shape` attributes to the `Mica` widget
+- Implement `DropDownButton` ([#85](https://github.com/bdlukaa/fluent_ui/issues/85))
+
 ## [3.5.0] - Flutter 2.8 - [09/12/2021]
 
 - **BREAKING** Minimal Flutter version is now 2.8

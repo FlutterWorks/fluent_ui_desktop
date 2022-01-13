@@ -2,76 +2,95 @@ import 'package:fluent_ui/fluent_ui.dart';
 
 import 'package:flutter/foundation.dart';
 
-// TODO: Navigate through items using keyboard (https://github.com/bdlukaa/fluent_ui/issues/19)
+enum TextChangedReason {
+  /// Whether the text in an [AutoSuggestBox] was changed by user input
+  userInput,
 
-typedef AutoSuggestBoxItemBuilder<T> = Widget Function(BuildContext, T);
-typedef AutoSuggestBoxItemSorter<T> = List<T> Function(String, List<T>);
-typedef AutoSuggestBoxTextBoxBuilder<T> = Widget Function(
-  BuildContext context,
-  TextEditingController controller,
-  FocusNode focusNode,
-  GlobalKey key,
-);
+  /// Whether the text in an [AutoSuggestBox] was changed because the user
+  /// chose the suggestion
+  suggestionChosen,
+}
+
+// TODO: Navigate through items using keyboard (https://github.com/bdlukaa/fluent_ui/issues/19)
 
 /// An AutoSuggestBox provides a list of suggestions for a user to select
 /// from as they type.
 ///
-/// ![AutoSuggestBox Preview](https://docs.microsoft.com/en-us/windows/uwp/design/controls-and-patterns/images/controls_autosuggest_expanded01.png)
+/// ![AutoSuggestBox Preview](https://docs.microsoft.com/en-us/windows/apps/design/controls/images/controls-autosuggest-expanded-01.png)
 ///
 /// See also:
-///   - [TextBox]
-///   - [ComboBox]
-class AutoSuggestBox<T> extends StatefulWidget {
+///
+///   * <https://docs.microsoft.com/en-us/windows/apps/design/controls/auto-suggest-box>
+///   * [TextBox], which is used by this widget to enter user text input
+///   * [Overlay], which is used to show the suggestion popup
+class AutoSuggestBox extends StatefulWidget {
   /// Creates a fluent-styled auto suggest box.
   const AutoSuggestBox({
     Key? key,
-    required this.controller,
     required this.items,
-    this.itemBuilder,
-    this.sorter = defaultItemSorter,
-    this.noResultsFound = defaultNoResultsFound,
-    this.textBoxBuilder = defaultTextBoxBuilder,
+    this.controller,
+    this.onChanged,
     this.onSelected,
+    this.trailingIcon,
+    this.clearButtonEnabled = true,
+    this.placeholder,
+    this.placeholderStyle,
   }) : super(key: key);
+
+  /// The list of items to display to the user to pick
+  final List<String> items;
 
   /// The controller used to have control over what to show on
   /// the [TextBox].
-  final TextEditingController controller;
+  final TextEditingController? controller;
 
-  /// The list of items to display to the user to pick. If empty,
-  /// [noResultsFound] is used.
-  final List<T> items;
-
-  /// The item builder to build [items]. If null, uses a default
-  /// internal builder
-  final AutoSuggestBoxItemBuilder<T>? itemBuilder;
-
-  /// Sort the items to show. [defaultItemSorter] is used by default
-  final AutoSuggestBoxItemSorter sorter;
-
-  /// Build the text box. [defaultTextBoxBuilder] is used by default
-  final AutoSuggestBoxTextBoxBuilder<T> textBoxBuilder;
-
-  /// The widget to show when the text the user typed doesn't match with
-  /// [items]s. [defaultNoResultsFound] is used by default.
-  ///
-  /// ![No results found Preview](https://docs.microsoft.com/en-us/windows/uwp/design/controls-and-patterns/images/controls_autosuggest_noresults.png)
-  final WidgetBuilder noResultsFound;
+  /// Called when the text is updated
+  final void Function(String text, TextChangedReason reason)? onChanged;
 
   /// Called when the user selected a value.
-  final ValueChanged<T>? onSelected;
+  final ValueChanged<String>? onSelected;
+
+  /// A widget displayed in the end of the [TextBox]
+  ///
+  /// Usually an [IconButton] or [Icon]
+  final Widget? trailingIcon;
+
+  /// Whether the close button is enabled
+  ///
+  /// Defauls to true
+  final bool clearButtonEnabled;
+
+  /// The text shown when the text box is empty
+  ///
+  /// See also:
+  ///
+  ///  * [TextBox.placeholder]
+  final String? placeholder;
+
+  /// The style of [placeholder]
+  ///
+  /// See also:
+  ///
+  ///  * [TextBox.placeholderStyle]
+  final TextStyle? placeholderStyle;
 
   @override
-  _AutoSuggestBoxState<T> createState() => _AutoSuggestBoxState<T>();
+  _AutoSuggestBoxState createState() => _AutoSuggestBoxState();
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
-    properties.add(IterableProperty<T>('items', items));
-    properties.add(ObjectFlagProperty<ValueChanged<T>?>(
+    properties.add(IterableProperty<String>('items', items));
+    properties.add(ObjectFlagProperty<ValueChanged<String>?>(
       'onSelected',
       onSelected,
       ifNull: 'disabled',
+    ));
+    properties.add(FlagProperty(
+      'clearButtonEnabled',
+      value: clearButtonEnabled,
+      defaultValue: true,
+      ifFalse: 'clear button disabled',
     ));
   }
 
@@ -80,81 +99,44 @@ class AutoSuggestBox<T> extends StatefulWidget {
       return element.toString().toLowerCase().contains(text.toLowerCase());
     }).toList();
   }
-
-  /// Creates a 'No results found' tile.
-  ///
-  /// ![No results found Preview](https://docs.microsoft.com/en-us/windows/uwp/design/controls-and-patterns/images/controls_autosuggest_noresults.png)
-  static Widget defaultNoResultsFound(context) {
-    return const ListTile(
-      title: DefaultTextStyle(
-        style: TextStyle(fontWeight: FontWeight.normal),
-        child: Text('No results found'),
-      ),
-    );
-  }
-
-  static Widget defaultTextBoxBuilder(
-    BuildContext context,
-    TextEditingController controller,
-    FocusNode focusNode,
-    GlobalKey key,
-  ) {
-    assert(debugCheckHasFluentLocalizations(context));
-    final FluentLocalizations localizations = FluentLocalizations.of(context);
-    return TextBox(
-      key: key,
-      controller: controller,
-      focusNode: focusNode,
-      placeholder: localizations.searchLabel,
-      clipBehavior:
-          focusNode.hasFocus ? Clip.none : Clip.antiAliasWithSaveLayer,
-    );
-  }
 }
 
-class _AutoSuggestBoxState<T> extends State<AutoSuggestBox<T>> {
+class _AutoSuggestBoxState<T> extends State<AutoSuggestBox> {
   final FocusNode focusNode = FocusNode();
   OverlayEntry? _entry;
   final LayerLink _layerLink = LayerLink();
   final GlobalKey _textBoxKey = GlobalKey();
 
+  late TextEditingController controller;
+
   @override
   void initState() {
     super.initState();
+    controller = widget.controller ?? TextEditingController();
+    controller.addListener(() {
+      if (!mounted) return;
+      if (controller.text.length < 2) setState(() {});
+    });
     focusNode.addListener(_handleFocusChanged);
   }
 
   @override
   void dispose() {
     focusNode.removeListener(_handleFocusChanged);
+    if (widget.controller == null) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
   void _handleFocusChanged() {
     final hasFocus = focusNode.hasFocus;
-    if (hasFocus) {
-      if (_entry == null && !(_entry?.mounted ?? false)) {
-        _insertOverlay();
-      }
-    } else {
+    if (!hasFocus) {
       _dismissOverlay();
+    } else {
+      _showOverlay();
     }
     setState(() {});
-  }
-
-  AutoSuggestBoxItemBuilder<T> get itemBuilder =>
-      widget.itemBuilder ?? _defaultItemBuilder;
-
-  Widget _defaultItemBuilder(BuildContext context, T value) {
-    return TappableListTile(
-      onTap: () {
-        widget.controller.text = '$value';
-        widget.onSelected?.call(value);
-        focusNode.unfocus();
-      },
-      title:
-          Text('$value', style: FluentTheme.maybeOf(context)?.typography.body),
-    );
   }
 
   void _insertOverlay() {
@@ -162,7 +144,7 @@ class _AutoSuggestBoxState<T> extends State<AutoSuggestBox<T>> {
       final context = _textBoxKey.currentContext;
       if (context == null) return const SizedBox.shrink();
       final box = _textBoxKey.currentContext!.findRenderObject() as RenderBox;
-      return Positioned(
+      final child = Positioned(
         width: box.size.width,
         child: CompositedTransformFollower(
           link: _layerLink,
@@ -170,60 +152,28 @@ class _AutoSuggestBoxState<T> extends State<AutoSuggestBox<T>> {
           offset: Offset(0, box.size.height + 0.8),
           child: SizedBox(
             width: box.size.width,
-            child: Acrylic(
-              tint: FluentTheme.of(context).acrylicBackgroundColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: const BorderRadius.vertical(
-                  bottom: Radius.circular(4.0),
-                ),
-                side: BorderSide(
-                  color: FluentTheme.of(context).scaffoldBackgroundColor,
-                  width: 0.8,
-                ),
-              ),
-              child: ValueListenableBuilder<TextEditingValue>(
-                valueListenable: widget.controller,
-                builder: (context, value, _) {
-                  final items = widget.sorter(value.text, widget.items);
-                  late Widget result;
-                  if (items.isEmpty) {
-                    result = widget.noResultsFound(context);
-                  } else {
-                    result = ListView(
-                      shrinkWrap: true,
-                      children: List.generate(items.length, (index) {
-                        final item = items[index];
-                        return itemBuilder(context, item);
-                      }),
-                    );
-                  }
-                  return AnimatedSwitcher(
-                    duration: FluentTheme.of(context).fastAnimationDuration,
-                    switchInCurve: FluentTheme.of(context).animationCurve,
-                    transitionBuilder: (child, animation) {
-                      if (child is ListView) {
-                        return child;
-                      }
-                      return EntrancePageTransition(
-                        child: child,
-                        animation: animation,
-                        vertical: true,
-                      );
-                    },
-                    layoutBuilder: (child, children) =>
-                        child ?? const SizedBox(),
-                    child: result,
-                  );
-                },
-              ),
+            child: _AutoSuggestBoxOverlay(
+              controller: controller,
+              items: widget.items,
+              onSelected: (String item) {
+                widget.onSelected?.call(item);
+                controller.text = item;
+                controller.selection = TextSelection.collapsed(
+                  offset: item.length,
+                );
+                widget.onChanged?.call(item, TextChangedReason.userInput);
+              },
             ),
           ),
         ),
       );
+
+      return child;
     });
 
     if (_textBoxKey.currentContext != null) {
       Overlay.of(context)?.insert(_entry!);
+      if (mounted) setState(() {});
     }
   }
 
@@ -232,16 +182,203 @@ class _AutoSuggestBoxState<T> extends State<AutoSuggestBox<T>> {
     _entry = null;
   }
 
+  void _showOverlay() {
+    if (_entry == null && !(_entry?.mounted ?? false)) {
+      _insertOverlay();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     assert(debugCheckHasFluentTheme(context));
+    assert(debugCheckHasFluentLocalizations(context));
+
     return CompositedTransformTarget(
       link: _layerLink,
-      child: widget.textBoxBuilder(
-        context,
-        widget.controller,
-        focusNode,
-        _textBoxKey,
+      child: TextBox(
+        key: _textBoxKey,
+        controller: controller,
+        focusNode: focusNode,
+        placeholder: widget.placeholder,
+        placeholderStyle: widget.placeholderStyle,
+        clipBehavior: _entry != null ? Clip.none : Clip.antiAliasWithSaveLayer,
+        suffix: Row(children: [
+          if (widget.trailingIcon != null) widget.trailingIcon!,
+          if (widget.clearButtonEnabled && controller.text.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(left: 2.0),
+              child: IconButton(
+                icon: const Icon(FluentIcons.chrome_close),
+                onPressed: () {
+                  controller.clear();
+                  focusNode.unfocus();
+                },
+              ),
+            ),
+        ]),
+        suffixMode: OverlayVisibilityMode.always,
+        onChanged: (text) {
+          widget.onChanged?.call(text, TextChangedReason.userInput);
+          _showOverlay();
+        },
+      ),
+    );
+  }
+}
+
+class _AutoSuggestBoxOverlay extends StatelessWidget {
+  const _AutoSuggestBoxOverlay({
+    Key? key,
+    required this.items,
+    required this.controller,
+    required this.onSelected,
+  }) : super(key: key);
+
+  final List items;
+  final TextEditingController controller;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = FluentTheme.of(context);
+    final localizations = FluentLocalizations.of(context);
+    return FocusScope(
+      autofocus: true,
+      child: Container(
+        constraints: const BoxConstraints(
+          maxHeight: 385,
+        ),
+        decoration: ShapeDecoration(
+          shape: RoundedRectangleBorder(
+            borderRadius: const BorderRadius.vertical(
+              bottom: Radius.circular(4.0),
+            ),
+            side: BorderSide(
+              color: theme.scaffoldBackgroundColor,
+              width: 0.8,
+            ),
+          ),
+          color: theme.micaBackgroundColor,
+        ),
+        child: ValueListenableBuilder<TextEditingValue>(
+          valueListenable: controller,
+          builder: (context, value, _) {
+            final items =
+                AutoSuggestBox.defaultItemSorter(value.text, this.items);
+            late Widget result;
+            if (items.isEmpty) {
+              result = Padding(
+                padding: const EdgeInsets.only(bottom: 4.0),
+                child: _AutoSuggestBoxOverlayTile(
+                    text: localizations.noResultsFoundLabel),
+              );
+            } else {
+              result = ListView(
+                key: ValueKey<int>(items.length),
+                shrinkWrap: true,
+                padding: const EdgeInsets.only(bottom: 4.0),
+                children: List.generate(items.length, (index) {
+                  final item = items[index];
+                  return _AutoSuggestBoxOverlayTile(
+                    text: '$item',
+                    onSelected: () {
+                      onSelected(item);
+                    },
+                  );
+                }),
+              );
+            }
+            return result;
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _AutoSuggestBoxOverlayTile extends StatefulWidget {
+  const _AutoSuggestBoxOverlayTile({
+    Key? key,
+    required this.text,
+    this.onSelected,
+  }) : super(key: key);
+
+  final String text;
+  final VoidCallback? onSelected;
+
+  @override
+  __AutoSuggestBoxOverlayTileState createState() =>
+      __AutoSuggestBoxOverlayTileState();
+}
+
+class __AutoSuggestBoxOverlayTileState extends State<_AutoSuggestBoxOverlayTile>
+    with SingleTickerProviderStateMixin {
+  late AnimationController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 125),
+    );
+    controller.forward();
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = FluentTheme.of(context);
+    return HoverButton(
+      onPressed: widget.onSelected,
+      margin: const EdgeInsets.only(top: 4.0, left: 4.0, right: 4.0),
+      builder: (context, states) => Stack(
+        children: [
+          Container(
+            height: 40.0,
+            padding: const EdgeInsets.symmetric(horizontal: 10.0),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(6.0),
+              color: ButtonThemeData.uncheckedInputColor(
+                theme,
+                states.isDisabled ? {ButtonStates.none} : states,
+              ),
+            ),
+            alignment: Alignment.centerLeft,
+            child: EntrancePageTransition(
+              child: Text(
+                widget.text,
+                style: theme.typography.body,
+              ),
+              animation: Tween<double>(
+                begin: 0.75,
+                end: 1.0,
+              ).animate(CurvedAnimation(
+                parent: controller,
+                curve: Curves.easeOut,
+              )),
+              vertical: true,
+            ),
+          ),
+          if (states.isFocused)
+            Positioned(
+              top: 11.0,
+              bottom: 11.0,
+              left: 0.0,
+              child: Container(
+                width: 3.0,
+                decoration: BoxDecoration(
+                  color: theme.accentColor,
+                  borderRadius: BorderRadius.circular(4.0),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

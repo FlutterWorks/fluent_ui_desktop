@@ -1,6 +1,15 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
+/// A borderless button with mainly text-based content
+///
+/// {@macro fluent_ui.buttons.base}
+///
+/// See also:
+///
+///   * [OutlinedButton], an outlined button
+///   * [FilledButton], a colored button
 class TextButton extends BaseButton {
+  /// Creates a text-button.
   const TextButton({
     Key? key,
     required Widget child,
@@ -25,7 +34,6 @@ class TextButton extends BaseButton {
     final theme = FluentTheme.of(context);
     return ButtonStyle(
       backgroundColor: ButtonState.all(Colors.transparent),
-      cursor: theme.inputMouseCursor,
       padding: ButtonState.all(const EdgeInsets.symmetric(
         horizontal: 10,
         vertical: 8.0,
@@ -35,16 +43,21 @@ class TextButton extends BaseButton {
         if (states.isDisabled) {
           color = theme.disabledColor;
         } else if (states.isPressing) {
-          color = theme.accentColor.resolveFromBrightness(theme.brightness);
+          color = theme.accentColor.resolveFromBrightness(
+            theme.brightness,
+            level: 1,
+          );
         } else if (states.isHovering) {
-          color = theme.accentColor
-              .resolveFromBrightness(theme.brightness, level: 1);
+          color = theme.accentColor.resolveFromBrightness(theme.brightness);
         } else {
           color = theme.accentColor;
         }
         return color;
       }),
-      textStyle: ButtonState.all(const TextStyle(fontWeight: FontWeight.w600)),
+      textStyle: ButtonState.all(const TextStyle(
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.5,
+      )),
     );
   }
 

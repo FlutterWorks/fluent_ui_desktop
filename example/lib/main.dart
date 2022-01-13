@@ -1,10 +1,10 @@
+import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:example/screens/icons.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
-
+import 'package:flutter_acrylic/flutter_acrylic.dart' as flutter_acrylic;
 import 'package:provider/provider.dart';
 import 'package:system_theme/system_theme.dart';
-import 'package:bitsdojo_window/bitsdojo_window.dart';
-import 'package:flutter_acrylic/flutter_acrylic.dart' as flutter_acrylic;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_strategy/url_strategy.dart';
 
@@ -15,7 +15,6 @@ import 'screens/mobile.dart';
 import 'screens/others.dart';
 import 'screens/settings.dart';
 import 'screens/typography.dart';
-
 import 'theme.dart';
 
 const String appTitle = 'Fluent UI Showcase for Flutter';
@@ -52,7 +51,7 @@ void main() async {
   if (!kIsWeb &&
       [TargetPlatform.windows, TargetPlatform.linux]
           .contains(defaultTargetPlatform)) {
-    await flutter_acrylic.Acrylic.initialize();
+    await flutter_acrylic.Window.initialize();
   }
 
   runApp(const MyApp());
@@ -153,8 +152,7 @@ class _MyHomePageState extends State<MyHomePage> {
       pane: NavigationPane(
         selected: index,
         onChanged: (i) => setState(() => index = i),
-        size: NavigationPaneSize(
-          openWidth: MediaQuery.of(context).size.width / 5,
+        size: const NavigationPaneSize(
           openMinWidth: 250,
           openMaxWidth: 320,
         ),
@@ -226,6 +224,10 @@ class _MyHomePageState extends State<MyHomePage> {
             title: const Text('Colors'),
           ),
           PaneItem(
+            icon: const Icon(FluentIcons.icon_sets_flag),
+            title: const Text('Icons'),
+          ),
+          PaneItem(
             icon: const Icon(FluentIcons.plain_text),
             title: const Text('Typography'),
           ),
@@ -245,7 +247,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
         ],
-        autoSuggestBox: AutoSuggestBox<String>(
+        autoSuggestBox: AutoSuggestBox(
           controller: TextEditingController(),
           items: const ['Item 1', 'Item 2', 'Item 3', 'Item 4'],
         ),
@@ -269,6 +271,7 @@ class _MyHomePageState extends State<MyHomePage> {
         const InputsPage(),
         const Forms(),
         ColorsPage(controller: colorsController),
+        const IconsPage(),
         const TypographyPage(),
         const Mobile(),
         const Others(),

@@ -56,6 +56,7 @@ Unofficial implementation of Fluent UI for [Flutter](flutter.dev). It's written 
   - [Checkbox](#checkbox)
   - [Toggle Switch](#toggle-switch)
   - [Radio Buttons](#radio-buttons)
+  - [DropDown Button](#dropdown-button) 
   - [Slider](#slider)
     - [Choosing between vertical and horizontal sliders](#choosing-between-vertical-and-horizontal-sliders)
 - [Forms](#forms)
@@ -78,6 +79,7 @@ Unofficial implementation of Fluent UI for [Flutter](flutter.dev). It's written 
   - [Scrollbar](#scrollbar)
   - [List Tile](#list-tile)
   - [Info Header](#info-header)
+  - [TreeView](#treeview)
 - [Mobile Widgets](#mobile-widgets)
   - [Chip](#chip)
   - [Pill Button Bar](#pill-button-bar)
@@ -170,6 +172,10 @@ Inside your app, you use icons to represent an action, such as copying text or n
 ```dart
 Icon(FluentIcons.add),
 ```
+
+For a complete reference of current icons, please check the [online demo](https://bdlukaa.github.io/fluent_ui/) and click on "Icons".
+
+The online demo has a search box and also supports clipboard copy in order to find every icon as fast as possible.
 
 ![](https://docs.microsoft.com/en-us/windows/uwp/design/style/images/icons/inside-icons.png)
 
@@ -859,6 +865,53 @@ The code above produces the following:
 
 ![Radio Buttons](https://docs.microsoft.com/en-us/windows/uwp/design/controls-and-patterns/images/controls/radio-button.png)
 
+## DropDown button
+
+A DropDownButton is a light dismiss container that contain buttons. 
+[Learn more](https://docs.microsoft.com/en-us/windows/apps/design/controls/buttons#create-a-drop-down-button)
+
+See also [Flyout](https://github.com/bdlukaa/fluent_ui#flyout) for more freedom.
+
+### Example
+
+```dart
+final flyoutController = FlyoutController();
+
+DropDownButton(
+  controller: dpController,
+  contentWidth: 150,
+  leading: const Icon(FluentIcons.align_left),
+  title: const Text('Alignment'),
+  items: [
+    DropDownButtonItem(
+      title: const Text('Left'),
+      leading: const Icon(FluentIcons.align_left),
+      onTap: () {},
+    ),
+    DropDownButtonItem(
+      title: const Text('Center'),
+      leading: const Icon(FluentIcons.align_center),
+      onTap: () {},
+    ),
+    DropDownButtonItem(
+      title: const Text('Right'),
+      leading: const Icon(FluentIcons.align_right),
+      onTap: () {},
+    ),
+  ],
+);
+
+@override
+void dispose() {
+  flyoutController.dispose();
+  super.dispose();
+}
+```
+
+### Screenshot
+
+![DropDownButton with light theme](https://user-images.githubusercontent.com/8223773/143767305-4de7f74f-e0e8-4509-9911-ec97c2926430.png)
+
 ## Slider
 
 A slider is a control that lets the user select from a range of values by moving a thumb control along a track. [Learn more](https://docs.microsoft.com/en-us/windows/uwp/design/controls-and-patterns/slider)
@@ -945,6 +998,17 @@ TextBox(
 Which produces the following:
 
 ![TextBox Example Preview](https://docs.microsoft.com/en-us/windows/apps/design/controls/images/text-box-ex1.png)
+
+If you want to validate the text box, use a `TextFormBox`:
+
+```dart
+TextFormBox(
+  placeholder: 'Your email',
+  validator: (text) {
+    if (text == null || text.isEmpty) return 'Provide an email';
+  }
+),
+```
 
 ## Auto Suggest Box
 
@@ -1411,6 +1475,53 @@ ComboBox(
 
 This will produce the same as the image above.
 
+## TreeView
+
+The `TreeView` control enables a hierarchical list with expanding and collapsing nodes that contain nested items. It can be used to illustrate a folder structure or nested relationships in your UI. [Learn More](https://docs.microsoft.com/en-us/windows/apps/design/controls/tree-view)
+
+The tree view uses a combination of indentation and icons to represent the nested relationship between parent nodes and child nodes. Collapsed nodes use a chevron pointing to the right, and expanded nodes use a chevron pointing down.
+
+![TreeView Simple](https://docs.microsoft.com/en-us/windows/apps/design/controls/images/treeview-simple.png)
+
+You can include an icon in the tree view item data template to represent nodes. For example, if you show a file system hierarchy, you could use folder icons for the parent notes and file icons for the leaf nodes.
+
+![TreeView Icons](https://docs.microsoft.com/en-us/windows/apps/design/controls/images/treeview-icons.png)
+
+Here's an example of how to create a tree view:
+
+```dart
+TreeView(
+  items: [
+    TreeViewItem(
+      content: const Text('Work Documents'),
+      children: [
+        TreeViewItem(content: const Text('XYZ Functional Spec')),
+        TreeViewItem(content: const Text('Feature Schedule')),
+        TreeViewItem(content: const Text('Overall Project Plan')),
+        TreeViewItem(content: const Text('Feature Resources Allocation')),
+      ],
+    ),
+    TreeViewItem(
+      content: const Text('Personal Documents'),
+      children: [
+        TreeViewItem(
+          content: const Text('Home Remodel'),
+          children: [
+            TreeViewItem(content: const Text('Contractor Contact Info')),
+            TreeViewItem(content: const Text('Paint Color Scheme')),
+            TreeViewItem(content: const Text('Flooring weedgrain type')),
+            TreeViewItem(content: const Text('Kitchen cabinet style')),
+          ],
+        ),
+      ],
+    ),
+  ],
+  onItemInvoked: (item) => debugPrint(item), // (optional)
+  // (optional). Can be TreeViewSelectionMode.single or TreeViewSelectionMode.multiple
+  selectionMode: TreeViewSelectionMode.none, 
+),
+```
+
 # Mobile Widgets
 
 Widgets with focus on mobile. Based on the official documentation and source code for [iOS](https://developer.microsoft.com/pt-br/fluentui#/controls/ios) and [Android](https://developer.microsoft.com/pt-br/fluentui#/controls/android). Most of the widgets above can adapt to small screens, and will fit on all your devices.
@@ -1521,7 +1632,9 @@ The list of equivalents between this library and `flutter/material.dart`
 | -                         | ToggleButton     |
 | Switch                    | ToggleSwitch     |
 | TextField                 | TextBox          |
+| TextFormField             | TextFormBox      |
 | DropdownButton            | Combobox         |
+| PopupMenuButton           | DropDownButton   |
 | -                         | AutoSuggestBox   |
 | AlertDialog               | ContentDialog    |
 | MaterialBanner            | InfoBar          |

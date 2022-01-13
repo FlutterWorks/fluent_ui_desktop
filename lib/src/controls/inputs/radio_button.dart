@@ -94,7 +94,6 @@ class RadioButton extends StatelessWidget {
     assert(debugCheckHasFluentTheme(context));
     final style = RadioButtonTheme.of(context).merge(this.style);
     return HoverButton(
-      cursor: style.cursor,
       autofocus: autofocus,
       focusNode: focusNode,
       onPressed: onChanged == null ? null : () => onChanged!(!checked),
@@ -208,25 +207,35 @@ class RadioButtonThemeData with Diagnosticable {
   final ButtonState<BoxDecoration?>? checkedDecoration;
   final ButtonState<BoxDecoration?>? uncheckedDecoration;
 
-  final ButtonState<MouseCursor>? cursor;
-
   const RadioButtonThemeData({
-    this.cursor,
     this.checkedDecoration,
     this.uncheckedDecoration,
   });
 
   factory RadioButtonThemeData.standard(ThemeData style) {
     return RadioButtonThemeData(
-      cursor: ButtonState.all(MouseCursor.defer),
       checkedDecoration: ButtonState.resolveWith((states) {
         return BoxDecoration(
           border: Border.all(
-            color: style.accentColor.light,
-            width: states.isHovering && !states.isPressing ? 3.4 : 5.0,
+            color: !states.isDisabled
+                ? style.accentColor.light
+                : style.brightness.isLight
+                    ? const Color.fromRGBO(0, 0, 0, 0.2169)
+                    : const Color.fromRGBO(255, 255, 255, 0.1581),
+            width: !states.isDisabled
+                ? states.isHovering && !states.isPressing
+                    ? 3.4
+                    : 5.0
+                : 4.0,
           ),
           shape: BoxShape.circle,
-          color: style.brightness.isLight ? Colors.white : Colors.black,
+          color: !states.isDisabled
+              ? style.brightness.isLight
+                  ? Colors.white
+                  : Colors.black
+              : style.brightness.isLight
+                  ? Colors.white
+                  : const Color.fromRGBO(255, 255, 255, 0.5302),
         );
       }),
       uncheckedDecoration: ButtonState.resolveWith((states) {
@@ -239,9 +248,13 @@ class RadioButtonThemeData with Diagnosticable {
                   : backgroundColor.withOpacity(0.0),
           border: Border.all(
             width: states.isPressing ? 4.5 : 1,
-            color: states.isPressing
-                ? style.accentColor
-                : style.inactiveColor.withOpacity(0.5),
+            color: !states.isDisabled
+                ? states.isPressing
+                    ? style.accentColor
+                    : style.borderInputColor
+                : style.brightness.isLight
+                    ? const Color.fromRGBO(0, 0, 0, 0.2169)
+                    : const Color.fromRGBO(255, 255, 255, 0.1581),
           ),
           shape: BoxShape.circle,
         );
@@ -252,7 +265,6 @@ class RadioButtonThemeData with Diagnosticable {
   static RadioButtonThemeData lerp(
       RadioButtonThemeData? a, RadioButtonThemeData? b, double t) {
     return RadioButtonThemeData(
-      cursor: t < 0.5 ? a?.cursor : b?.cursor,
       checkedDecoration: ButtonState.lerp(
           a?.checkedDecoration, b?.checkedDecoration, t, BoxDecoration.lerp),
       uncheckedDecoration: ButtonState.lerp(a?.uncheckedDecoration,
@@ -262,7 +274,6 @@ class RadioButtonThemeData with Diagnosticable {
 
   RadioButtonThemeData merge(RadioButtonThemeData? style) {
     return RadioButtonThemeData(
-      cursor: style?.cursor ?? cursor,
       checkedDecoration: style?.checkedDecoration ?? checkedDecoration,
       uncheckedDecoration: style?.uncheckedDecoration ?? uncheckedDecoration,
     );
@@ -271,8 +282,6 @@ class RadioButtonThemeData with Diagnosticable {
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
-    properties
-        .add(DiagnosticsProperty<ButtonState<MouseCursor>?>('cursor', cursor));
     properties.add(DiagnosticsProperty<ButtonState<BoxDecoration?>?>(
         'checkedDecoration', checkedDecoration));
     properties.add(DiagnosticsProperty<ButtonState<BoxDecoration?>?>(

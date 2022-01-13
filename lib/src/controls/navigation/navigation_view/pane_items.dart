@@ -27,6 +27,7 @@ class PaneItem extends NavigationPaneItem {
     this.infoBadge,
     this.focusNode,
     this.autofocus = false,
+    this.mouseCursor,
   });
 
   /// The title used by this item. If the display mode is top
@@ -58,6 +59,8 @@ class PaneItem extends NavigationPaneItem {
   /// {@macro flutter.widgets.Focus.autofocus}
   final bool autofocus;
 
+  final MouseCursor? mouseCursor;
+
   /// Used to construct the pane items all around [NavigationView]. You can
   /// customize how the pane items should look like by overriding this method
   Widget build(
@@ -71,51 +74,41 @@ class PaneItem extends NavigationPaneItem {
     final PaneDisplayMode mode = displayMode ??
         _NavigationBody.maybeOf(context)?.displayMode ??
         PaneDisplayMode.minimal;
-    assert(displayMode != PaneDisplayMode.auto);
-    final bool isTop = mode == PaneDisplayMode.top;
-    final bool isCompact = mode == PaneDisplayMode.compact;
-    final bool isOpen =
-        [PaneDisplayMode.open, PaneDisplayMode.minimal].contains(mode);
-    final NavigationPaneThemeData theme = NavigationPaneTheme.of(context);
+    assert(mode != PaneDisplayMode.auto);
 
+    final NavigationPaneThemeData theme = NavigationPaneTheme.of(context);
     final String titleText =
         title != null && title is Text ? (title! as Text).data ?? '' : '';
 
-    return Container(
-      key: itemKey,
-      height: !isTop ? 36.0 : null,
-      margin: const EdgeInsets.only(right: 6.0, left: 6.0, bottom: 4.0),
-      alignment: Alignment.center,
-      child: HoverButton(
-        autofocus: autofocus ?? this.autofocus,
-        focusNode: focusNode,
-        onPressed: onPressed,
-        cursor: theme.cursor,
-        builder: (context, states) {
-          final textStyle = selected
-              ? theme.selectedTextStyle?.resolve(states)
-              : theme.unselectedTextStyle?.resolve(states);
-          final textResult = titleText.isNotEmpty
-              ? Padding(
-                  padding: theme.labelPadding ?? EdgeInsets.zero,
-                  child: Text(titleText, style: textStyle),
-                )
-              : const SizedBox.shrink();
-          Widget child = Flex(
-            direction: isTop ? Axis.vertical : Axis.horizontal,
-            textDirection: isTop ? ui.TextDirection.ltr : ui.TextDirection.rtl,
-            mainAxisAlignment: isTop || !isOpen
-                ? MainAxisAlignment.center
-                : MainAxisAlignment.end,
-            children: [
-              if (isOpen && infoBadge != null)
-                Padding(
-                  padding: const EdgeInsets.only(right: 6.0),
-                  child: infoBadge!,
+    return HoverButton(
+      autofocus: autofocus ?? this.autofocus,
+      focusNode: focusNode,
+      onPressed: onPressed,
+      cursor: mouseCursor,
+      builder: (context, states) {
+        final textStyle = selected
+            ? theme.selectedTextStyle?.resolve(states)
+            : theme.unselectedTextStyle?.resolve(states);
+        final textResult = titleText.isNotEmpty
+            ? Padding(
+                padding: theme.labelPadding ?? EdgeInsets.zero,
+                child: Text(
+                  titleText,
+                  style: textStyle,
+                  maxLines: 1,
+                  overflow: TextOverflow.fade,
+                  softWrap: false,
                 ),
-              if (isOpen) Expanded(child: textResult),
-              () {
-                final icon = Padding(
+              )
+            : const SizedBox.shrink();
+        Widget result() {
+          switch (mode) {
+            case PaneDisplayMode.compact:
+              return Container(
+                key: itemKey,
+                height: 36.0,
+                alignment: Alignment.center,
+                child: Padding(
                   padding: theme.iconPadding ?? EdgeInsets.zero,
                   child: IconTheme.merge(
                     data: IconThemeData(
@@ -125,50 +118,104 @@ class PaneItem extends NavigationPaneItem {
                           textStyle?.color,
                       size: 16.0,
                     ),
-                    child: Center(
-                      child: Stack(clipBehavior: Clip.none, children: [
-                        this.icon,
-                        // Show here if it's not on top and not open
-                        if (infoBadge != null && !isTop && !isOpen)
-                          Positioned(
-                            right: -8,
-                            top: -8,
-                            child: infoBadge!,
-                          ),
-                      ]),
+                    child: Center(child: () {
+                      if (infoBadge != null) {
+                        return Stack(
+                          alignment: Alignment.center,
+                          clipBehavior: Clip.none,
+                          children: [
+                            icon,
+                            Positioned(
+                              right: -8,
+                              top: -8,
+                              child: infoBadge!,
+                            ),
+                          ],
+                        );
+                      }
+                      return icon;
+                    }()),
+                  ),
+                ),
+              );
+            case PaneDisplayMode.minimal:
+            case PaneDisplayMode.open:
+              return SizedBox(
+                key: itemKey,
+                height: 36.0,
+                child: Row(children: [
+                  Padding(
+                    padding: theme.iconPadding ?? EdgeInsets.zero,
+                    child: IconTheme.merge(
+                      data: IconThemeData(
+                        color: (selected
+                                ? theme.selectedIconColor?.resolve(states)
+                                : theme.unselectedIconColor?.resolve(states)) ??
+                            textStyle?.color,
+                        size: 16.0,
+                      ),
+                      child: Center(child: icon),
                     ),
                   ),
-                );
-                if (isOpen) {
-                  return icon;
-                }
-                return icon;
-              }(),
-            ],
-          );
-          if (isTop && showTextOnTop) {
-            child = Row(mainAxisSize: MainAxisSize.min, children: [
-              child,
-              textResult,
-            ]);
+                  Expanded(child: textResult),
+                  if (infoBadge != null)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 6.0),
+                      child: infoBadge!,
+                    ),
+                ]),
+              );
+            case PaneDisplayMode.top:
+              final result = Row(
+                children: [
+                  Padding(
+                    padding: theme.iconPadding ?? EdgeInsets.zero,
+                    child: IconTheme.merge(
+                      data: IconThemeData(
+                        color: (selected
+                                ? theme.selectedIconColor?.resolve(states)
+                                : theme.unselectedIconColor?.resolve(states)) ??
+                            textStyle?.color,
+                        size: 16.0,
+                      ),
+                      child: Center(child: icon),
+                    ),
+                  ),
+                  textResult,
+                ],
+              );
+              if (infoBadge != null) {
+                return Stack(clipBehavior: Clip.none, children: [
+                  result,
+                  if (infoBadge != null)
+                    Positioned(
+                      right: -8,
+                      top: -8,
+                      child: infoBadge!,
+                    ),
+                ]);
+              }
+              return Center(child: result);
+            default:
+              throw '$mode is not a supported type';
           }
-          if (isTop && infoBadge != null) {
-            child = Stack(children: [
-              child,
-              Positioned(
-                top: 0,
-                right: 0,
-                child: infoBadge!,
-              ),
-            ]);
-          }
-          child = AnimatedContainer(
+        }
+
+        final bool isTop = mode == PaneDisplayMode.top;
+        final bool isCompact = mode == PaneDisplayMode.compact;
+
+        return Semantics(
+          label: title == null ? null : titleText,
+          selected: selected,
+          child: AnimatedContainer(
             duration: theme.animationDuration ?? Duration.zero,
             curve: theme.animationCurve ?? standartCurve,
+            margin: const EdgeInsets.only(right: 6.0, left: 6.0, bottom: 4.0),
             decoration: BoxDecoration(
               color: () {
                 final ButtonState<Color?> tileColor = theme.tileColor ??
                     ButtonState.resolveWith((states) {
+                      // By default, if it's top, do not show any color
                       if (isTop) return Colors.transparent;
                       return ButtonThemeData.uncheckedInputColor(
                         FluentTheme.of(context),
@@ -182,31 +229,30 @@ class PaneItem extends NavigationPaneItem {
               }(),
               borderRadius: BorderRadius.circular(4.0),
             ),
-            child: child,
-          );
-          child = Semantics(
-            label: title == null ? null : titleText,
-            selected: selected,
             child: FocusBorder(
-              child: child,
+              child: () {
+                final showTooltip = ((isTop && !showTextOnTop) || isCompact) &&
+                    titleText.isNotEmpty &&
+                    !states.isDisabled;
+
+                if (showTooltip) {
+                  return Tooltip(
+                    message: titleText,
+                    style: TooltipThemeData(
+                      textStyle: title is Text ? (title as Text).style : null,
+                    ),
+                    child: result(),
+                  );
+                }
+
+                return result();
+              }(),
               focused: states.isFocused,
               renderOutside: false,
             ),
-          );
-          if (((isTop && !showTextOnTop) || isCompact) &&
-              titleText.isNotEmpty &&
-              !states.isDisabled) {
-            return Tooltip(
-              message: titleText,
-              style: TooltipThemeData(
-                textStyle: title is Text ? (title as Text).style : null,
-              ),
-              child: child,
-            );
-          }
-          return child;
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

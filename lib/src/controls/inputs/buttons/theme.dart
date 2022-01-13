@@ -14,7 +14,7 @@ class ButtonStyle with Diagnosticable {
     this.padding,
     this.border,
     this.shape,
-    this.cursor,
+    this.iconSize,
   });
 
   final ButtonState<TextStyle?>? textStyle;
@@ -33,7 +33,7 @@ class ButtonStyle with Diagnosticable {
 
   final ButtonState<OutlinedBorder?>? shape;
 
-  final ButtonState<MouseCursor?>? cursor;
+  final ButtonState<double?>? iconSize;
 
   ButtonStyle? merge(ButtonStyle? other) {
     if (other == null) return this;
@@ -46,7 +46,7 @@ class ButtonStyle with Diagnosticable {
       padding: other.padding ?? padding,
       border: other.border ?? border,
       shape: other.shape ?? shape,
-      cursor: other.cursor ?? cursor,
+      iconSize: other.iconSize ?? iconSize,
     );
   }
 
@@ -72,6 +72,12 @@ class ButtonStyle with Diagnosticable {
       shape: ButtonState.lerp(a?.shape, b?.shape, t, (a, b, t) {
         return ShapeBorder.lerp(a, b, t) as OutlinedBorder;
       }),
+      iconSize: ButtonState.lerp(
+        a?.iconSize,
+        b?.iconSize,
+        t,
+        lerpDouble,
+      ),
     );
   }
 }
@@ -250,22 +256,16 @@ class ButtonThemeData with Diagnosticable {
   }
 
   static Color uncheckedInputColor(ThemeData style, Set<ButtonStates> states) {
-    // The opacity is 0 because, when transitioning between [Colors.transparent]
-    // and the actual color gives a weird effect
     if (style.brightness == Brightness.light) {
       if (states.isDisabled) return style.disabledColor;
-      if (states.isPressing) return Colors.grey[70];
-      if (states.isHovering) return Colors.grey[40];
-      return Colors.grey[40].withOpacity(0);
+      if (states.isPressing) return const Color(0xFF221D08).withOpacity(0.255);
+      if (states.isHovering) return const Color(0xFF221D08).withOpacity(0.075);
+      return Colors.transparent;
     } else {
       if (states.isDisabled) return style.disabledColor;
-      if (states.isPressing) return Colors.grey[130];
-      if (states.isHovering) return Colors.grey[150];
-      return Colors.grey[150].withOpacity(0);
+      if (states.isPressing) return const Color(0xFFFFF3E8).withOpacity(0.285);
+      if (states.isHovering) return const Color(0xFFFFF3E8).withOpacity(0.12);
+      return Colors.transparent;
     }
   }
-
-  // static Color iconButtonColor(ThemeData style) {
-
-  // }
 }

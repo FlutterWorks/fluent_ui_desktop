@@ -3,6 +3,18 @@ import 'package:flutter/foundation.dart';
 
 import 'package:fluent_ui/fluent_ui.dart';
 
+/// @{template fluent_ui.buttons.base}
+/// Buttons give people a way to trigger an action. They’re typically found in
+/// forms, dialog panels, and dialogs.
+/// @{end-template}
+///
+/// See also:
+///
+///   * <https://developer.microsoft.com/en-us/fluentui#/controls/android/button>
+///   * <https://developer.microsoft.com/en-us/fluentui#/controls/web/button>
+///   * [TextButton], a borderless button with mainly text-based content
+///   * [OutlinedButton], an outlined button
+///   * [FilledButton], a colored button
 abstract class BaseButton extends StatefulWidget {
   const BaseButton({
     Key? key,
@@ -33,8 +45,6 @@ abstract class BaseButton extends StatefulWidget {
   final VoidCallback? onLongPress;
 
   /// Customizes this button's appearance.
-  ///
-  /// Null by default.
   final ButtonStyle? style;
 
   /// {@macro flutter.widgets.Focus.focusNode}
@@ -44,6 +54,8 @@ abstract class BaseButton extends StatefulWidget {
   final bool autofocus;
 
   /// Typically the button's label.
+  ///
+  /// Usually a [Text] widget
   final Widget child;
 
   @protected
@@ -91,15 +103,10 @@ class _BaseButtonState extends State<BaseButton> {
     }
 
     final Widget result = HoverButton(
-      onLongPress: widget.onLongPress,
       autofocus: widget.autofocus,
       focusNode: widget.focusNode,
-      cursor: ButtonState.resolveWith((states) {
-        return effectiveValue<MouseCursor?>(
-                (style) => style?.cursor?.resolve(states)) ??
-            MouseCursor.defer;
-      }),
       onPressed: widget.onPressed,
+      onLongPress: widget.onLongPress,
       builder: (context, states) {
         T? resolve<T>(
             ButtonState<T>? Function(ButtonStyle? style) getProperty) {
@@ -133,6 +140,7 @@ class _BaseButtonState extends State<BaseButton> {
               vertical: theme.visualDensity.vertical,
             ))
             .clamp(EdgeInsets.zero, EdgeInsetsGeometry.infinity);
+        final double? iconSize = resolve<double?>((style) => style?.iconSize);
         Widget result = PhysicalModel(
           color: Colors.transparent,
           shadowColor: resolvedShadowColor ?? Colors.black,
@@ -151,7 +159,10 @@ class _BaseButtonState extends State<BaseButton> {
             ),
             padding: padding,
             child: IconTheme.merge(
-              data: IconThemeData(color: resolvedForegroundColor, size: 14.0),
+              data: IconThemeData(
+                color: resolvedForegroundColor,
+                size: iconSize ?? 14.0,
+              ),
               child: DefaultTextStyle(
                 style: (resolvedTextStyle ?? const TextStyle(inherit: true))
                     .copyWith(color: resolvedForegroundColor),
