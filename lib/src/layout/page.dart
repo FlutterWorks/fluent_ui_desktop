@@ -23,6 +23,48 @@ class ScaffoldPage extends StatelessWidget {
     this.padding,
   }) : super(key: key);
 
+  /// Creates a scrollable page
+  ///
+  /// The default horizontal and vertical padding is added automatically
+  ScaffoldPage.scrollable({
+    Key? key,
+    this.header,
+    this.bottomBar,
+    this.padding,
+    ScrollController? scrollController,
+    required List<Widget> children,
+  })  : content = Builder(builder: (context) {
+          return ListView(
+            controller: scrollController,
+            padding: EdgeInsets.only(
+              bottom: kPageDefaultVerticalPadding,
+              left: PageHeader.horizontalPadding(context),
+              right: PageHeader.horizontalPadding(context),
+            ),
+            children: children,
+          );
+        }),
+        super(key: key);
+
+  /// Creates a page with padding applied to [content]
+  ScaffoldPage.withPadding({
+    Key? key,
+    this.header,
+    this.bottomBar,
+    this.padding,
+    required Widget content,
+  })  : content = Builder(builder: (context) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: kPageDefaultVerticalPadding,
+              left: PageHeader.horizontalPadding(context),
+              right: PageHeader.horizontalPadding(context),
+            ),
+            child: content,
+          );
+        }),
+        super(key: key);
+
   /// The content of this page. The content area is where most of the information
   /// for the selected nav category is displayed.
   ///
@@ -62,13 +104,15 @@ class ScaffoldPage extends StatelessWidget {
           color: theme.scaffoldBackgroundColor,
           padding: EdgeInsets.only(
             top: padding?.top ?? kPageDefaultVerticalPadding,
-            bottom: padding?.bottom ?? kPageDefaultVerticalPadding,
+            // bottom: padding?.bottom ?? kPageDefaultVerticalPadding,
           ),
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            if (header != null) header!,
-            Expanded(child: content),
-          ]),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (header != null) header!,
+              Expanded(child: content),
+            ],
+          ),
         ),
       ),
       if (bottomBar != null) bottomBar!,
@@ -83,6 +127,7 @@ class PageHeader extends StatelessWidget {
     this.leading,
     this.title,
     this.commandBar,
+    this.padding,
   }) : super(key: key);
 
   /// The widget displayed before [title]. If null, some widget
@@ -100,6 +145,8 @@ class PageHeader extends StatelessWidget {
   /// A bar with a list of actions an user can take
   final Widget? commandBar;
 
+  final double? padding;
+
   static double horizontalPadding(BuildContext context) {
     assert(debugCheckHasMediaQuery(context));
     final screenWidth = MediaQuery.of(context).size.width;
@@ -113,7 +160,7 @@ class PageHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     assert(debugCheckHasFluentTheme(context));
     final leading = this.leading;
-    final horizontalPadding = PageHeader.horizontalPadding(context);
+    final horizontalPadding = padding ?? PageHeader.horizontalPadding(context);
     return Padding(
       padding: EdgeInsets.only(
         bottom: 18.0,

@@ -28,6 +28,8 @@ class PaneItem extends NavigationPaneItem {
     this.focusNode,
     this.autofocus = false,
     this.mouseCursor,
+    this.tileColor,
+    this.selectedTileColor,
   });
 
   /// The title used by this item. If the display mode is top
@@ -59,7 +61,89 @@ class PaneItem extends NavigationPaneItem {
   /// {@macro flutter.widgets.Focus.autofocus}
   final bool autofocus;
 
+  /// {@macro fluent_ui.controls.inputs.HoverButton.mouseCursor}
   final MouseCursor? mouseCursor;
+
+  /// The color of the tile when unselected.
+  /// If null, [NavigationPaneThemeData.tileColor] is used
+  final ButtonState<Color?>? tileColor;
+
+  /// The color of the tile when unselected.
+  /// If null, [NavigationPaneThemeData.tileColor]/hovering is used
+  final ButtonState<Color?>? selectedTileColor;
+
+  T? _getPropertyFromTitle<T>([dynamic def]) {
+    if (title is Text) {
+      final title = this.title as Text;
+      switch (T) {
+        case String:
+          return (title.data ?? title.textSpan?.toPlainText()) as T?;
+        case InlineSpan:
+          return (title.textSpan ??
+              TextSpan(
+                text: title.data ?? '',
+                style: _getPropertyFromTitle<TextStyle>()
+                        ?.merge(def as TextStyle?) ??
+                    def as TextStyle?,
+              )) as T?;
+        case TextStyle:
+          return title.style as T?;
+        case TextAlign:
+          return title.textAlign as T?;
+        case TextHeightBehavior:
+          return title.textHeightBehavior as T?;
+        case TextWidthBasis:
+          return title.textWidthBasis as T?;
+      }
+    } else if (title is RichText) {
+      final title = this.title as RichText;
+      switch (T) {
+        case String:
+          return title.text.toPlainText() as T?;
+        case InlineSpan:
+          if (T is InlineSpan) {
+            final span = title.text;
+            span.style?.merge(def as TextStyle?);
+            return span as T;
+          }
+          return title.text as T;
+        case TextStyle:
+          return (title.text.style as T?) ?? def as T?;
+        case TextAlign:
+          return title.textAlign as T?;
+        case TextHeightBehavior:
+          return title.textHeightBehavior as T?;
+        case TextWidthBasis:
+          return title.textWidthBasis as T?;
+      }
+    } else if (title is Icon) {
+      final title = this.title as Icon;
+      switch (T) {
+        case String:
+          if (title.icon?.codePoint == null) return null;
+          return String.fromCharCode(title.icon!.codePoint) as T?;
+        case InlineSpan:
+          return TextSpan(
+            text: String.fromCharCode(title.icon!.codePoint),
+            style: _getPropertyFromTitle<TextStyle>(),
+          ) as T?;
+        case TextStyle:
+          return TextStyle(
+            color: title.color,
+            fontSize: title.size,
+            fontFamily: title.icon?.fontFamily,
+            package: title.icon?.fontPackage,
+          ) as T?;
+        case TextAlign:
+          return null;
+        case TextHeightBehavior:
+          return null;
+        case TextWidthBasis:
+          return null;
+      }
+    }
+    return null;
+  }
 
   /// Used to construct the pane items all around [NavigationView]. You can
   /// customize how the pane items should look like by overriding this method
@@ -71,33 +155,52 @@ class PaneItem extends NavigationPaneItem {
     bool showTextOnTop = true,
     bool? autofocus,
   }) {
+    final maybeBody = InheritedNavigationView.maybeOf(context);
     final PaneDisplayMode mode = displayMode ??
-        _NavigationBody.maybeOf(context)?.displayMode ??
+        maybeBody?.displayMode ??
+        maybeBody?.pane?.displayMode ??
         PaneDisplayMode.minimal;
     assert(mode != PaneDisplayMode.auto);
 
     final NavigationPaneThemeData theme = NavigationPaneTheme.of(context);
-    final String titleText =
-        title != null && title is Text ? (title! as Text).data ?? '' : '';
+    final String titleText = _getPropertyFromTitle<String>() ?? '';
 
-    return HoverButton(
+    final TextStyle baseStyle =
+        _getPropertyFromTitle<TextStyle>() ?? const TextStyle();
+
+    final bool isTop = mode == PaneDisplayMode.top;
+    final bool isCompact = mode == PaneDisplayMode.compact;
+
+    final button = HoverButton(
       autofocus: autofocus ?? this.autofocus,
       focusNode: focusNode,
       onPressed: onPressed,
       cursor: mouseCursor,
       builder: (context, states) {
-        final textStyle = selected
-            ? theme.selectedTextStyle?.resolve(states)
-            : theme.unselectedTextStyle?.resolve(states);
+        TextStyle textStyle = baseStyle.merge(
+          selected
+              ? theme.selectedTextStyle?.resolve(states)
+              : theme.unselectedTextStyle?.resolve(states),
+        );
+        if (isTop && states.isPressing) {
+          textStyle = textStyle.copyWith(
+            color: textStyle.color?.withOpacity(0.75),
+          );
+        }
         final textResult = titleText.isNotEmpty
             ? Padding(
                 padding: theme.labelPadding ?? EdgeInsets.zero,
-                child: Text(
-                  titleText,
-                  style: textStyle,
+                child: RichText(
+                  text: _getPropertyFromTitle<InlineSpan>(textStyle)!,
                   maxLines: 1,
                   overflow: TextOverflow.fade,
                   softWrap: false,
+                  textAlign:
+                      _getPropertyFromTitle<TextAlign>() ?? TextAlign.start,
+                  textHeightBehavior:
+                      _getPropertyFromTitle<TextHeightBehavior>(),
+                  textWidthBasis: _getPropertyFromTitle<TextWidthBasis>() ??
+                      TextWidthBasis.parent,
                 ),
               )
             : const SizedBox.shrink();
@@ -115,26 +218,28 @@ class PaneItem extends NavigationPaneItem {
                       color: (selected
                               ? theme.selectedIconColor?.resolve(states)
                               : theme.unselectedIconColor?.resolve(states)) ??
-                          textStyle?.color,
+                          textStyle.color,
                       size: 16.0,
                     ),
-                    child: Center(child: () {
-                      if (infoBadge != null) {
-                        return Stack(
-                          alignment: Alignment.center,
-                          clipBehavior: Clip.none,
-                          children: [
-                            icon,
-                            Positioned(
-                              right: -8,
-                              top: -8,
-                              child: infoBadge!,
-                            ),
-                          ],
-                        );
-                      }
-                      return icon;
-                    }()),
+                    child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: () {
+                          if (infoBadge != null) {
+                            return Stack(
+                              alignment: Alignment.center,
+                              clipBehavior: Clip.none,
+                              children: [
+                                icon,
+                                Positioned(
+                                  right: -8,
+                                  top: -8,
+                                  child: infoBadge!,
+                                ),
+                              ],
+                            );
+                          }
+                          return icon;
+                        }()),
                   ),
                 ),
               );
@@ -151,7 +256,7 @@ class PaneItem extends NavigationPaneItem {
                         color: (selected
                                 ? theme.selectedIconColor?.resolve(states)
                                 : theme.unselectedIconColor?.resolve(states)) ??
-                            textStyle?.color,
+                            textStyle.color,
                         size: 16.0,
                       ),
                       child: Center(child: icon),
@@ -160,7 +265,7 @@ class PaneItem extends NavigationPaneItem {
                   Expanded(child: textResult),
                   if (infoBadge != null)
                     Padding(
-                      padding: const EdgeInsets.only(right: 6.0),
+                      padding: const EdgeInsetsDirectional.only(end: 8.0),
                       child: infoBadge!,
                     ),
                 ]),
@@ -175,17 +280,17 @@ class PaneItem extends NavigationPaneItem {
                         color: (selected
                                 ? theme.selectedIconColor?.resolve(states)
                                 : theme.unselectedIconColor?.resolve(states)) ??
-                            textStyle?.color,
+                            textStyle.color,
                         size: 16.0,
                       ),
                       child: Center(child: icon),
                     ),
                   ),
-                  textResult,
+                  if (showTextOnTop) textResult,
                 ],
               );
               if (infoBadge != null) {
-                return Stack(clipBehavior: Clip.none, children: [
+                return Stack(key: itemKey, clipBehavior: Clip.none, children: [
                   result,
                   if (infoBadge != null)
                     Positioned(
@@ -195,36 +300,38 @@ class PaneItem extends NavigationPaneItem {
                     ),
                 ]);
               }
-              return Center(child: result);
+              // return Container(
+              //     key: itemKey, child: result, color: Colors.orange);
+              return Center(key: itemKey, child: result);
             default:
               throw '$mode is not a supported type';
           }
         }
 
-        final bool isTop = mode == PaneDisplayMode.top;
-        final bool isCompact = mode == PaneDisplayMode.compact;
-
         return Semantics(
-          label: title == null ? null : titleText,
+          label: titleText.isEmpty ? null : titleText,
           selected: selected,
           child: AnimatedContainer(
             duration: theme.animationDuration ?? Duration.zero,
-            curve: theme.animationCurve ?? standartCurve,
-            margin: const EdgeInsets.only(right: 6.0, left: 6.0, bottom: 4.0),
+            curve: theme.animationCurve ?? standardCurve,
+            margin: const EdgeInsets.only(right: 6.0, left: 6.0),
             decoration: BoxDecoration(
               color: () {
-                final ButtonState<Color?> tileColor = theme.tileColor ??
-                    ButtonState.resolveWith((states) {
-                      // By default, if it's top, do not show any color
-                      if (isTop) return Colors.transparent;
-                      return ButtonThemeData.uncheckedInputColor(
-                        FluentTheme.of(context),
-                        states,
-                      );
-                    });
+                final ButtonState<Color?> tileColor = this.tileColor ??
+                    theme.tileColor ??
+                    kDefaultTileColor(context, isTop);
                 final newStates = states.toSet()..remove(ButtonStates.disabled);
+                if (selected && selectedTileColor != null) {
+                  return selectedTileColor!.resolve(newStates);
+                }
                 return tileColor.resolve(
-                  selected ? {ButtonStates.hovering} : newStates,
+                  selected
+                      ? {
+                          states.isHovering
+                              ? ButtonStates.pressing
+                              : ButtonStates.hovering,
+                        }
+                      : newStates,
                 );
               }(),
               borderRadius: BorderRadius.circular(4.0),
@@ -237,10 +344,8 @@ class PaneItem extends NavigationPaneItem {
 
                 if (showTooltip) {
                   return Tooltip(
-                    message: titleText,
-                    style: TooltipThemeData(
-                      textStyle: title is Text ? (title as Text).style : null,
-                    ),
+                    richMessage: _getPropertyFromTitle<InlineSpan>(),
+                    style: TooltipThemeData(textStyle: baseStyle),
                     child: result(),
                   );
                 }
@@ -253,6 +358,41 @@ class PaneItem extends NavigationPaneItem {
           ),
         );
       },
+    );
+
+    final int? index = () {
+      if (maybeBody?.pane?.indicator != null) {
+        return maybeBody!.pane!.effectiveIndexOf(this);
+      }
+    }();
+
+    final GlobalKey? key = () {
+      if (index != null && !index.isNegative) {
+        return _PaneItemKeys.of(index, context);
+      }
+    }();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4.0),
+      child: () {
+        // If there is an indicator and the item is an effective item
+        if (maybeBody?.pane?.indicator != null && index != -1) {
+          return Stack(children: [
+            button,
+            Positioned.fill(
+              child: InheritedNavigationView.merge(
+                itemIndex: index,
+                child: KeyedSubtree(
+                  key: index != null ? key : null,
+                  child: maybeBody!.pane!.indicator!,
+                ),
+              ),
+            ),
+          ]);
+        }
+
+        return button;
+      }(),
     );
   }
 }
@@ -346,7 +486,7 @@ class PaneItemHeader extends NavigationPaneItem {
 ///   * [PaneItemHeader], used to label groups of items.
 class PaneItemAction extends PaneItem implements NavigationPaneItem {
   PaneItemAction({
-    required icon,
+    required Widget icon,
     required this.onTap,
     title,
     infoBadge,
@@ -360,8 +500,8 @@ class PaneItemAction extends PaneItem implements NavigationPaneItem {
           autofocus: autofocus,
         );
 
-  /// The function who will be executed when the item is clicked
-  final Function() onTap;
+  /// The function that will be executed when the item is clicked
+  final VoidCallback onTap;
 
   @override
   Widget build(
@@ -371,6 +511,7 @@ class PaneItemAction extends PaneItem implements NavigationPaneItem {
     PaneDisplayMode? displayMode,
     bool showTextOnTop = true,
     bool? autofocus,
+    int index = -1,
   }) {
     return super.build(
       context,

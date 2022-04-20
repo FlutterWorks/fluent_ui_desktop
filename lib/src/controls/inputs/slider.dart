@@ -33,6 +33,7 @@ class Slider extends StatefulWidget {
     this.focusNode,
     this.vertical = false,
     this.autofocus = false,
+    this.mouseCursor = MouseCursor.defer,
   })  : assert(value >= min && value <= max),
         assert(divisions == null || divisions > 0),
         super(key: key);
@@ -42,8 +43,112 @@ class Slider extends StatefulWidget {
   /// The slider's thumb is drawn at a position that corresponds to this value.
   final double value;
 
+  /// Called during a drag when the user is selecting a new value for the slider
+  /// by dragging.
+  ///
+  /// The slider passes the new value to the callback but does not actually
+  /// change state until the parent widget rebuilds the slider with the new
+  /// value.
+  ///
+  /// If null, the slider will be displayed as disabled.
+  ///
+  /// The callback provided to onChanged should update the state of the parent
+  /// [StatefulWidget] using the [State.setState] method, so that the parent
+  /// gets rebuilt; for example:
+  ///
+  /// {@tool snippet}
+  ///
+  /// ```dart
+  /// Slider(
+  ///   value: _duelCommandment.toDouble(),
+  ///   min: 1.0,
+  ///   max: 10.0,
+  ///   divisions: 10,
+  ///   label: '$_duelCommandment',
+  ///   onChanged: (double newValue) {
+  ///     setState(() {
+  ///       _duelCommandment = newValue.round();
+  ///     });
+  ///   },
+  /// )
+  /// ```
+  /// {@end-tool}
+  ///
+  /// See also:
+  ///
+  ///  * [onChangeStart] for a callback that is called when the user starts
+  ///    changing the value.
+  ///  * [onChangeEnd] for a callback that is called when the user stops
+  ///    changing the value.
   final ValueChanged<double>? onChanged;
+
+  /// Called when the user starts selecting a new value for the slider.
+  ///
+  /// This callback shouldn't be used to update the slider [value] (use
+  /// [onChanged] for that), but rather to be notified when the user has started
+  /// selecting a new value by starting a drag or with a tap.
+  ///
+  /// The value passed will be the last [value] that the slider had before the
+  /// change began.
+  ///
+  /// {@tool snippet}
+  ///
+  /// ```dart
+  /// Slider(
+  ///   value: _duelCommandment.toDouble(),
+  ///   min: 1.0,
+  ///   max: 10.0,
+  ///   divisions: 10,
+  ///   label: '$_duelCommandment',
+  ///   onChanged: (double newValue) {
+  ///     setState(() {
+  ///       _duelCommandment = newValue.round();
+  ///     });
+  ///   },
+  ///   onChangeStart: (double startValue) {
+  ///     print('Started change at $startValue');
+  ///   },
+  /// )
+  /// ```
+  /// {@end-tool}
+  ///
+  /// See also:
+  ///
+  ///  * [onChangeEnd] for a callback that is called when the value change is
+  ///    complete.
   final ValueChanged<double>? onChangeStart;
+
+  /// Called when the user is done selecting a new value for the slider.
+  ///
+  /// This callback shouldn't be used to update the slider [value] (use
+  /// [onChanged] for that), but rather to know when the user has completed
+  /// selecting a new [value] by ending a drag or a click.
+  ///
+  /// {@tool snippet}
+  ///
+  /// ```dart
+  /// Slider(
+  ///   value: _duelCommandment.toDouble(),
+  ///   min: 1.0,
+  ///   max: 10.0,
+  ///   divisions: 10,
+  ///   label: '$_duelCommandment',
+  ///   onChanged: (double newValue) {
+  ///     setState(() {
+  ///       _duelCommandment = newValue.round();
+  ///     });
+  ///   },
+  ///   onChangeEnd: (double newValue) {
+  ///     print('Ended change on $newValue');
+  ///   },
+  /// )
+  /// ```
+  /// {@end-tool}
+  ///
+  /// See also:
+  ///
+  ///  * [onChangeStart] for a callback that is called when a value change
+  ///    begins.
   final ValueChanged<double>? onChangeEnd;
 
   /// The maximum value the user can select.
@@ -86,6 +191,9 @@ class Slider extends StatefulWidget {
   /// real-world value that is normally shown vertically
   /// (such as temperature).
   final bool vertical;
+
+  /// {@macro fluent_ui.controls.inputs.HoverButton.mouseCursor}
+  final MouseCursor mouseCursor;
 
   @override
   _SliderState createState() => _SliderState();
@@ -133,10 +241,13 @@ class _SliderState extends m.State<Slider> {
   @override
   Widget build(BuildContext context) {
     assert(debugCheckHasFluentTheme(context));
+    assert(debugCheckHasDirectionality(context));
     final style = SliderTheme.of(context).merge(widget.style);
+    final direction = Directionality.of(context);
     Widget child = HoverButton(
-      onPressed: () {},
+      onPressed: widget.onChanged == null ? null : () {},
       margin: style.margin ?? EdgeInsets.zero,
+      cursor: widget.mouseCursor,
       builder: (context, states) => m.Material(
         type: m.MaterialType.transparency,
         child: TweenAnimationBuilder<double>(
@@ -164,6 +275,7 @@ class _SliderState extends m.State<Slider> {
               valueIndicatorShape: _RectangularSliderValueIndicatorShape(
                 backgroundColor: style.labelBackgroundColor,
                 vertical: widget.vertical,
+                ltr: direction == TextDirection.ltr,
               ),
               trackHeight: 1.75,
               trackShape: _CustomTrackShape(),
@@ -207,7 +319,7 @@ class _SliderState extends m.State<Slider> {
     );
     if (widget.vertical) {
       return RotatedBox(
-        quarterTurns: 3,
+        quarterTurns: direction == TextDirection.ltr ? 3 : 5,
         child: child,
       );
     }
@@ -521,14 +633,19 @@ class SliderThemeData with Diagnosticable {
 class _RectangularSliderValueIndicatorShape extends m.SliderComponentShape {
   final Color? backgroundColor;
   final bool vertical;
+  final bool ltr;
 
   /// Create a slider value indicator that resembles a rectangular tooltip.
   const _RectangularSliderValueIndicatorShape({
     this.backgroundColor,
     this.vertical = false,
+    this.ltr = false,
   });
 
-  get _pathPainter => _RectangularSliderValueIndicatorPathPainter(vertical);
+  get _pathPainter => _RectangularSliderValueIndicatorPathPainter(
+        vertical,
+        ltr,
+      );
 
   @override
   Size getPreferredSize(
@@ -575,7 +692,13 @@ class _RectangularSliderValueIndicatorShape extends m.SliderComponentShape {
 class _RectangularSliderValueIndicatorPathPainter {
   final bool vertical;
 
-  const _RectangularSliderValueIndicatorPathPainter([this.vertical = false]);
+  /// Whether the current [Directionality] is [TextDirection.ltr]
+  final bool ltr;
+
+  const _RectangularSliderValueIndicatorPathPainter([
+    this.vertical = false,
+    this.ltr = false,
+  ]);
 
   static const double _triangleHeight = 8.0;
   static const double _labelPadding = 8.0;
@@ -687,18 +810,28 @@ class _RectangularSliderValueIndicatorPathPainter {
       const Radius.circular(_upperRectRadius),
     );
     trianglePath.addRRect(upperRRect);
-
     canvas.save();
     // Prepare the canvas for the base of the tooltip, which is relative to the
     // center of the thumb.
-    const verticalFactor = 20;
+    final double verticalFactor = ltr ? 20.0 : 10.0;
     canvas.translate(
-      center.dx + (vertical ? -verticalFactor : 0),
-      center.dy - _bottomTipYOffset + (vertical ? -verticalFactor : 0),
+      center.dx +
+          (vertical
+              ? ltr
+                  ? -verticalFactor
+                  : verticalFactor * 2
+              : 0),
+      center.dy -
+          _bottomTipYOffset +
+          (vertical
+              ? ltr
+                  ? -verticalFactor
+                  : -verticalFactor * 2
+              : 0),
     );
     canvas.scale(scale, scale);
     // Rotate the label if it's vertical
-    if (vertical) canvas.rotate(math.pi / 2);
+    if (vertical) canvas.rotate((ltr ? 1 : -1) * math.pi / 2);
     if (strokePaintColor != null) {
       final Paint strokePaint = Paint()
         ..color = strokePaintColor

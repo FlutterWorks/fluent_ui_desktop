@@ -17,7 +17,7 @@ class InfoLabel extends StatelessWidget {
   }) : super(key: key);
 
   /// The text of the label. It'll be styled acorrding to
-  /// [headerStyle]. If this is empty, a blank space will
+  /// [labelStyle]. If this is empty, a blank space will
   /// be rendered.
   final String label;
 
@@ -54,7 +54,7 @@ class InfoLabel extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 4.0),
             child: labelWidget,
           ),
-        if (child != null) child!,
+        if (child != null) Flexible(child: child!),
         if (!isHeader)
           Padding(
             padding: const EdgeInsets.only(left: 4.0),

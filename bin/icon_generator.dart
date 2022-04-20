@@ -38,29 +38,27 @@ void main(List<String> args) async {
   final StringBuffer dartFileBuffer = StringBuffer(fileHeader);
   for (final Glyph glyph in glyphs) {
     dartFileBuffer.writeln(
-      "  static const IconData ${glyph.name} = IconData(0x${glyph.codepoint}, fontFamily: 'FluentIcons', fontPackage: 'fluent_ui');",
+      "  static const IconData ${glyph.name} = IconData(0x${glyph.codepoint}, fontFamily: 'FluentIcons', fontPackage: 'fluent_ui',);\n",
     );
   }
 
   // NEW Map of all glyphs (adds iteration capabilities)
-  dartFileBuffer.writeln(
-    "  static const Map<String,IconData> allIcons = {"
-  );
+  dartFileBuffer.writeln("  static const Map<String,IconData> allIcons = {");
   for (final Glyph glyph in glyphs) {
     dartFileBuffer.writeln(
       "    '${glyph.name}': ${glyph.name},",
     );
   }
-  dartFileBuffer.writeln(
-      "  };"
-  );
-
+  dartFileBuffer.writeln("  };");
 
   dartFileBuffer.writeln("}");
-
-
-
-  await File("lib/src/icons.dart").writeAsString(dartFileBuffer.toString());
+  final outputFile = File("lib/src/icons.dart");
+  final formatProcess = await Process.start(
+    'flutter',
+    ['format', outputFile.path],
+  );
+  stdout.addStream(formatProcess.stdout);
+  await outputFile.writeAsString(dartFileBuffer.toString());
 }
 
 Glyph mapToGlyph(dynamic item) {
@@ -96,6 +94,8 @@ String get pathSeparator => Platform.isWindows ? "\\" : "/";
 
 const String fileHeader = """
 // GENERATED FILE, DO NOT EDIT
+
+// ignore_for_file: constant_identifier_names
 
 import 'package:flutter/widgets.dart' show IconData;
 

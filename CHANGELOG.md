@@ -1,6 +1,231 @@
 Date format: DD/MM/YYYY
 
-## [3.7.0] - Breaking changes - [12/01/2022]
+## [next]
+
+- Implemented `MenuFlyout` ([#266](https://github.com/bdlukaa/fluent_ui/pull/266))
+  - Implemented `FlyoutPosition`, which controls where the flyout will be opened according to the child. It can be `above`, `below` or `side`
+  - `FlyoutOpenMode.longHover`, which makes possible to open the flyout when the user performs a long hover
+  - Added `Flyout.onOpen` and `Flyout.onClose`. Some convenience callbacks that are called when the flyout is opened or closed, respectively
+  - Implement `PopupContentSizeInfo`, which provides the information about the content size
+  - Implemented `MenuFlyoutItem`, `MenuFlyoutSeparator` and `MenuFlyoutSubItem`. They are used inside `MenuFlyout` to render the menu items
+  - `horizontalPositionDependentBox` is now globally available for use as a top function
+
+## [3.10.3] - [15/04/2022]
+
+- Do not use duplicated `Scrollbar`s ([#279](https://github.com/bdlukaa/fluent_ui/pull/279/))
+- Allow custom height on `NavigationPane` header. ([#260](https://github.com/bdlukaa/fluent_ui/pull/260/))
+- Allow to define the minimal tab width ([#282](https://github.com/bdlukaa/fluent_ui/pull/282/))
+- Allow applying custom leading Widget to NavigationPane ([#288](https://github.com/bdlukaa/fluent_ui/pull/288/))
+- `TextFormBox.expands` now works properly ([#291]](https://github.com/bdlukaa/fluent_ui/pull/291))
+- Focus on `TextBox` is no longer duplicated ([#290](https://github.com/bdlukaa/fluent_ui/pull/290))
+
+## [3.10.2] - [09/04/2022]
+
+- `NavigationView` without pane no longer throws error ([#276](https://github.com/bdlukaa/fluent_ui/issues/276))
+
+## [3.10.1] - [06/04/2022]
+
+- Fix overflow behavior for `TreeViewItem` ([#270](https://github.com/bdlukaa/fluent_ui/pull/270))
+- Do not animate sticky indicators when parent is updated ([#273](https://github.com/bdlukaa/fluent_ui/pull/273))
+- Add Arabic(ar) localization ([#268](https://github.com/bdlukaa/fluent_ui/pull/268))
+
+## [3.10.0] - Localization, Indicators, CommandBar and Flyouts - [02/04/2022]
+
+- Improves `icons.dart` formatting and its generation ([#215](https://github.com/bdlukaa/fluent_ui/pull/215))
+- Use correct color on `FilledButton` when disabled ([209](https://github.com/bdlukaa/fluent_ui/pull/209))
+- Built-in support for new languages ([#216](https://github.com/bdlukaa/fluent_ui/pull/216)):
+  - English
+  - Spanish (reviewed by [@henry2man](https://github.com/henry2man))
+  - French (reviewed by [@WinXaito](https://github.com/WinXaito))
+  - Brazilian Portuguese (reviewed by [@bdlukaa](https://github.com/bdlukaa))
+  - Russian (reviewed by [@raitonoberu](https://github.com/raitonoberu))
+  - German (reviewed by [@larsb24](https://github.com/larsb24))
+  - Hindi (reviewed by [@alexmercerind](https://github.com/alexmercerind))
+  - Simplified Chinese (reviewed by [@zacksleo](https://github.com/zacksleo))
+- Add `useInheritedMediaQuery` property to `FluentApp` ([#211](https://github.com/bdlukaa/fluent_ui/pull/211))
+- `TreeView` updates ([#255](https://github.com/bdlukaa/fluent_ui/pull/225)):
+  - Optional vertical scrolling by setting `shrinkWrap` to `false`
+  - TreeViewItem now has a custom primary key (`value` field)
+  - Added `onSelectionChanged` callback, called when the selection is changed
+- Account for enabled on pressing states ([#233](https://github.com/bdlukaa/fluent_ui/pull/233))
+- Implement `CommandBar` ([#232](https://github.com/bdlukaa/fluent_ui/pull/232))
+  - Add `DynamicOverflow` layout widget, for one-run horizontal or vertical layout with an overflow widget
+  - Add `HorizontalScrollView` helper widget, with mouse wheel horizontal scrolling
+- Long `content` widget no longer overflow in `ContentDialog` ([#242](https://github.com/bdlukaa/fluent_ui/issues/242))
+- Content state is no longer lost when the pane display mode is changed ([#250](https://github.com/bdlukaa/fluent_ui/pull/250))
+- **BREAKING** Update indicators ([#248](https://github.com/bdlukaa/fluent_ui/pull/248)):
+  - Added `InheritedNavigationView`
+  - Updated sticky indicator to match the latest Win 11 UI ([#173](https://github.com/bdlukaa/fluent_ui/issues/173))
+  - **BREAKING** Renamed `NavigationPane.indicatorBuilder` to `NavigationPane.indicator`
+  - **BREAKING** Indicators are no longer built with functions
+    Before:
+    ```dart
+    indicatorBuilder: ({
+      required BuildContext context,
+      required NavigationPane pane,
+      required Axis axis,
+      required Widget child,
+    }) {
+      if (pane.selected == null) return child;
+      assert(debugCheckHasFluentTheme(context));
+      final theme = NavigationPaneTheme.of(context);
+
+      final left = theme.iconPadding?.left ?? theme.labelPadding?.left ?? 0;
+      final right = theme.labelPadding?.right ?? theme.iconPadding?.right ?? 0;
+
+      return StickyNavigationIndicator(
+        index: pane.selected!,
+        pane: pane,
+        child: child,
+        color: theme.highlightColor,
+        curve: Curves.easeIn,
+        axis: axis,
+        topPadding: EdgeInsets.only(left: left, right: right),
+      );
+    }
+    ```
+
+    Now:
+    ```dart
+    indicator: StickyNavigationIndicator(
+      color: Colors.blue.lighter, // optional
+    ),
+    ```
+- `initiallyExpanded` property on `Expander` works properly ([#252](https://github.com/bdlukaa/fluent_ui/pull/252))
+- **BREAKING** Flyout changes:
+  - Removed `Flyout.contentWidth` and added `FlyoutContent.constraints`. Now the content will be automatically sized and layed out according to the placement
+  - Added `Flyout.placement` which takes a `FlyoutPlacement`
+  - Added `Flyout.openMode` which takes a `FlyoutOpenMode`
+  - `Flyout.controller` is no longer required. If not provided, a local controller is created to handle the `Flyout.openMode` settings
+  - **Breaking** `FlyoutController.open` is now a function
+  - Added `FlyoutController.isOpen`, `FlyoutController.isClosed`, `FlyoutController.close()`, `FlyoutController.open()` and `FlyoutController.toggle()`
+  - **Breaking** Removed `Popup.contentHeight`
+- **BREAKING** Updated typography ([#261](https://github.com/bdlukaa/fluent_ui/pull/261)):
+  - Renamed `Typography.standart` to `Typography.fromBrightness`
+  - Renamed `Typography` constructor to `Typography.raw`
+  - Default color for dark mode is now `const Color(0xE4000000)`
+  - Updated default font sizes for `display`, `titleLarge`, `title` and `subtitle`
+- `TabWidthBehavior.sizeToContent` now works properly ([#218](https://github.com/bdlukaa/fluent_ui/issues/218))
+
+## [3.9.1] - Input Update - [25/02/2022]
+
+- `TextBox` updates: ([#179](https://github.com/bdlukaa/fluent_ui/pull/179))
+  - Correctly apply the `style` property
+  - Correctly apply `decoration` to the background
+  - Added `foregroundDecoration` and `highlightColor` property. They can not be specified at the same time
+  - **BREAKING** replaced `maxLengthEnforeced` with `maxLengthEnforcement`
+- Expose more propertied to `TextFormBox`
+- `AutoSuggestBox` updates:
+  - Improved fidelity of the suggestions overlay expose more customization properties ([#174](https://github.com/bdlukaa/fluent_ui/issues/174))
+  - When a suggestion is picked, the overlay is automatically closed and the text box is unfocused
+  - Clear button now only shows when the text box is focused
+- Add directionality support ([#184](https://github.com/bdlukaa/fluent_ui/pull/184))
+- Correctly apply elevation for `DropDownButton` overlay ([#182](https://github.com/bdlukaa/fluent_ui/issues/182))
+- Show app bar even if `NavigationPane` is not provided on `NavigationView` ([#187](https://github.com/bdlukaa/fluent_ui/issues/187))
+- Ensure `NavigationAppBar.actions` are rendered on the top of the other widgets ([#177](https://github.com/bdlukaa/fluent_ui/issues/177))
+- All Form widgets now have the same height by default
+- Only show one scrollbar on `ComboBox` overlay
+- Fix opened pane opacity
+- Added `menuColor` for theme, which is now used by dropdown button, auto suggest box, tooltip and content dialog
+- Added `Card` and `cardColor` for theme
+- Update fluent text controls and added support for `SelectableText` ([#196](https://github.com/bdlukaa/fluent_ui/pull/196))
+
+## [3.9.0] - Fidelity - [10/02/2022]
+
+- **BREAKING** Renamed `standartCurve` to `standardCurve`
+- **BREAKING** Completly rework `DropDownButton`
+- **BREAKING** Removed `CheckboxThemeData.thirdStateIcon`
+
+  Currently, there isn't a fluent icon that is close to the native icon. A local widget *`_ThirdStateDash`* is used
+- Do not override material `Theme` on `FluentApp` ([#155](https://github.com/bdlukaa/fluent_ui/pull/154))
+- Slider thumb now doesn't change inner size if hovered while disabled
+- Uniform foreground color on `Checkbox`
+- Updated `FilledButton` Style
+- `ToggleButton` and `FilledButton` now share the same style
+- `ScaffoldPage.scrollable` and `ScaffoldPage.withPadding`
+- Ensure we use `Typography.body` as the default text style on `BaseButton` ([#120](https://github.com/bdlukaa/fluent_ui/issues/160))
+- Update `ButtonThemeData.uncheckedInputColor`
+
+## [3.8.0] - Flutter Favorite - [03/02/2022]
+
+- Tests ([#142](https://github.com/bdlukaa/fluent_ui/pull/142))
+- Added Material Theme to Fluent Theme Builder ([#133](https://github.com/bdlukaa/fluent_ui/issues/133))
+- Add more customization options to PaneItem ([#111](https://github.com/bdlukaa/fluent_ui/issues/111), [#144](https://github.com/bdlukaa/fluent_ui/issues/144))
+- `NavigationView` updates **BREAKING**:
+  - Properly add item key to `PaneItem` in top mode ([#143](https://github.com/bdlukaa/fluent_ui/issues/143))
+  - Items bounds and positions are fetched when the item list is scrolled as well to prevent misalignment
+  - Added the helper functions `NavigationIndicator.end` and `NavigationIndicator.sticky`
+  - Use `Curves.easeIn` for sticky navigation indicator by default
+  - Use the correct accent color for navigation indicators by default
+  - `EntrancePageTransition` is now the correct page transition used when display mode is top
+  - Apply correct press effect for `PaneItem` when display mode is top 
+  - **BREAKING** Removed `NavigationPane.defaultNavigationIndicator`
+  - **BREAKING** Replaced `offsets` and `sizes` with `pane` in `NavigationPane`
+
+  Before:
+  ```dart
+  pane: NavigationPane(
+    indicatorBuilder: ({
+      required BuildContext context,
+      /// The navigation pane corresponding to this indicator
+      required NavigationPane pane,
+      /// Corresponds to the current display mode. If top, Axis.vertical
+      /// is passed, otherwise Axis.vertical
+      Axis? axis,
+      /// Corresponds to the pane itself as a widget. The indicator is
+      /// rendered over the whole pane.
+      required Widget child,
+    }) {
+      if (pane.selected == null) return child;
+      assert(debugCheckHasFluentTheme(context));
+      final theme = NavigationPaneThemeData.of(context);
+
+      axis??= Axis.horizontal;
+
+      return EndNavigationIndicator(
+        index: pane.selected,
+        offsets: () => pane.effectiveItems.getPaneItemsOffsets  (pane.paneKey),
+        sizes: pane.effectiveItems.getPaneItemsSizes,
+        child: child,
+        color: theme.highlightColor,
+        curve: theme.animationCurve ?? Curves.linear,
+        axis: axis,
+      );
+    },
+  ),
+  ```
+
+  Now:
+  ```dart
+  pane: NavigationPane(
+    indicatorBuilder: ({
+      required BuildContext context,
+      /// The navigation pane corresponding to this indicator
+      required NavigationPane pane,
+      /// Corresponds to the current display mode. If top, Axis.vertical
+      /// is passed, otherwise Axis.vertical
+      required Axis axis,
+      /// Corresponds to the pane itself as a widget. The indicator is
+      /// rendered over the whole pane.
+      required Widget child,
+    }) {
+      if (pane.selected == null) return child;
+      assert(debugCheckHasFluentTheme(context));
+      final theme = NavigationPaneThemeData.of(context);
+
+      return EndNavigationIndicator(
+        index: pane.selected,
+        pane: pane,
+        child: child,
+        color: theme.highlightColor,
+        curve: theme.animationCurve ?? Curves.linear,
+        axis: axis,
+      );
+    },
+  ),
+  ```
+
+## [3.7.0] - Breaking changes - [21/01/2022]
 
 - AutoSuggestBox: ([#130](https://github.com/bdlukaa/fluent_ui/pull/130))
   - It gets opened automatically when it gets focus
@@ -19,15 +244,13 @@ Date format: DD/MM/YYYY
 - Updated FluentIcons as per 30/12/2021
 - **BREAKING** Renamed `FluentIcons.close` to `FluentIcons.chrome_close`
 - Fixed rounded corners on the ComboBox widget
-
-## [3.6.1] - [27/12/2021]
-
 - Fixed missing padding before close button on `TabView` ([#122](https://github.com/bdlukaa/fluent_ui/issues/122))
 - Readded tab minimal size for `equal` and `sizeToContent` tab width behaviours ([#122](https://github.com/bdlukaa/fluent_ui/issues/122))
 - `TabView`'s close button now uses `SmallIconButton`
 - If a tab is partially off the view, it's scrolled until it's visible
 - Fix `IconButton`'s icon size
 - Update `OutlinedButton`, `FilledButton` and `TextButton` styles
+- Implement lazy tree view ([#139](https://github.com/bdlukaa/fluent_ui/pull/139))
 
 ## [3.6.0] - TabView Update - [25/12/2021]
 

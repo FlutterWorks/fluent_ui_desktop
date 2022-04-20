@@ -1,5 +1,3 @@
-// ignore_for_file: overridden_fields
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 
@@ -112,19 +110,26 @@ class Checkbox extends StatelessWidget {
               return style.uncheckedDecoration?.resolve(state);
             }
           }(),
-          child: Icon(
-            checked == null ? style.thirdstateIcon : style.icon,
-            size: 12,
-            color: () {
-              if (checked == null) {
-                return style.thirdstateIconColor?.resolve(state);
-              } else if (checked!) {
-                return style.checkedIconColor?.resolve(state);
-              } else {
-                return style.uncheckedIconColor?.resolve(state);
-              }
-            }(),
-          ),
+          child: checked == null
+              ? _ThirdStateDash(
+                  color: style.thirdstateIconColor?.resolve(state) ??
+                      style.checkedIconColor?.resolve(state) ??
+                      FluentTheme.of(context).inactiveColor,
+                )
+              : Icon(
+                  style.icon,
+                  size: 12,
+                  color: () {
+                    if (checked == null) {
+                      return style.thirdstateIconColor?.resolve(state) ??
+                          style.checkedIconColor?.resolve(state);
+                    } else if (checked!) {
+                      return style.checkedIconColor?.resolve(state);
+                    } else {
+                      return style.uncheckedIconColor?.resolve(state);
+                    }
+                  }(),
+                ),
         );
         if (content != null) {
           child = Row(mainAxisSize: MainAxisSize.min, children: [
@@ -145,17 +150,30 @@ class Checkbox extends StatelessWidget {
   }
 }
 
+class _ThirdStateDash extends StatelessWidget {
+  const _ThirdStateDash({Key? key, required this.color}) : super(key: key);
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 1.4,
+      width: 8,
+      color: color,
+    );
+  }
+}
+
 class CheckboxTheme extends InheritedTheme {
   /// Creates a button theme that controls how descendant [Checkbox]es should
   /// look like.
   const CheckboxTheme({
     Key? key,
-    required this.child,
+    required Widget child,
     required this.data,
   }) : super(key: key, child: child);
 
-  @override
-  final Widget child;
   final CheckboxThemeData data;
 
   /// Creates a button theme that controls how descendant [Checkbox]es should
@@ -216,7 +234,6 @@ class CheckboxThemeData with Diagnosticable {
   final ButtonState<Decoration?>? thirdstateDecoration;
 
   final IconData? icon;
-  final IconData? thirdstateIcon;
   final ButtonState<Color?>? checkedIconColor;
   final ButtonState<Color?>? uncheckedIconColor;
   final ButtonState<Color?>? thirdstateIconColor;
@@ -231,7 +248,6 @@ class CheckboxThemeData with Diagnosticable {
     this.padding,
     this.margin,
     this.icon,
-    this.thirdstateIcon,
     this.checkedIconColor,
     this.uncheckedIconColor,
     this.thirdstateIconColor,
@@ -260,9 +276,8 @@ class CheckboxThemeData with Diagnosticable {
                     ? const Color.fromRGBO(0, 0, 0, 0.2169)
                     : const Color.fromRGBO(255, 255, 255, 0.1581),
           ),
-          color: states.isHovering
-              ? style.inactiveColor.withOpacity(0.1)
-              : null,
+          color:
+              states.isHovering ? style.inactiveColor.withOpacity(0.1) : null,
           borderRadius: radius,
         ),
       ),
@@ -274,14 +289,16 @@ class CheckboxThemeData with Diagnosticable {
       ),
       checkedIconColor: ButtonState.resolveWith((states) {
         return !states.isDisabled
-              ? style.checkedColor
-              : style.brightness.isLight
-                  ? Colors.white
-                  : const Color.fromRGBO(255, 255, 255, 0.5302);
+            ? ButtonThemeData.checkedInputColor(
+                style,
+                states,
+              ).basedOnLuminance()
+            : style.brightness.isLight
+                ? Colors.white
+                : const Color.fromRGBO(255, 255, 255, 0.5302);
       }),
       uncheckedIconColor: ButtonState.all(Colors.transparent),
       icon: FluentIcons.check_mark,
-      thirdstateIcon: FluentIcons.charticulator_line_style_dashed,
       margin: const EdgeInsets.all(4.0),
     );
   }
@@ -295,7 +312,6 @@ class CheckboxThemeData with Diagnosticable {
       margin: EdgeInsetsGeometry.lerp(a?.margin, b?.margin, t),
       padding: EdgeInsetsGeometry.lerp(a?.padding, b?.padding, t),
       icon: t < 0.5 ? a?.icon : b?.icon,
-      thirdstateIcon: t < 0.5 ? a?.thirdstateIcon : b?.thirdstateIcon,
       checkedIconColor: ButtonState.lerp(
           a?.checkedIconColor, b?.checkedIconColor, t, Color.lerp),
       uncheckedIconColor: ButtonState.lerp(
@@ -316,7 +332,6 @@ class CheckboxThemeData with Diagnosticable {
       margin: style?.margin ?? margin,
       padding: style?.padding ?? padding,
       icon: style?.icon ?? icon,
-      thirdstateIcon: style?.thirdstateIcon ?? thirdstateIcon,
       checkedIconColor: style?.checkedIconColor ?? checkedIconColor,
       uncheckedIconColor: style?.uncheckedIconColor ?? uncheckedIconColor,
       thirdstateIconColor: style?.thirdstateIconColor ?? thirdstateIconColor,
@@ -354,7 +369,6 @@ class CheckboxThemeData with Diagnosticable {
       checkedIconColor,
     ));
     properties.add(IconDataProperty('icon', icon));
-    properties.add(IconDataProperty('thirdstateIcon', thirdstateIcon));
     properties.add(ObjectFlagProperty<ButtonState<Decoration?>?>.has(
       'checkedDecoration',
       checkedDecoration,

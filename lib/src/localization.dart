@@ -1,13 +1,14 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:fluent_ui/generated/l10n.dart';
 import 'package:flutter/foundation.dart';
 
 /// Defines the localized resource values used by the fluent widgets
 ///
 /// See also:
-///   * [DefaultFluentLocalizations], the default, English-only, implementation
+///   * [DefaultFluentLocalizations], the default implementation
 ///    of this interface.
 abstract class FluentLocalizations {
-  const FluentLocalizations._();
+  FluentLocalizations._();
 
   /// Label for "close" buttons and menu items.
   String get closeButtonLabel;
@@ -46,18 +47,6 @@ abstract class FluentLocalizations {
   /// The dialog label
   String get dialogLabel;
 
-  /// The label for the cut button on the text selection controls
-  String get cutButtonLabel;
-
-  /// The label for the copy button on the text selection controls
-  String get copyButtonLabel;
-
-  /// The label for the paste button on the text selection controls
-  String get pasteButtonLabel;
-
-  /// The label for the select all button on the text selection controls
-  String get selectAllButtonLabel;
-
   /// The label used by [TabView]'s new button
   String get newTabLabel;
 
@@ -72,6 +61,42 @@ abstract class FluentLocalizations {
 
   /// The label used by [AutoSuggestBox] when the results can't be found
   String get noResultsFoundLabel;
+
+  /// The label for the cut action on the text selection controls
+  String get cutActionLabel;
+
+  /// The cut shortcut label used by text selection controls
+  String get cutShortcut;
+
+  /// The tooltip for the cut action on the text selection controls
+  String get cutActionTooltip;
+
+  /// The label for the copy action on the text selection controls
+  String get copyActionLabel;
+
+  /// The copy shortcut label used by text selection controls
+  String get copyShortcut;
+
+  /// The tooltip for the copy action on the text selection controls
+  String get copyActionTooltip;
+
+  /// The label for the paste button on the text selection controls
+  String get pasteActionLabel;
+
+  /// The paste shortcut label used by text selection controls
+  String get pasteShortcut;
+
+  /// The tooltip for the paste action on the text selection controls
+  String get pasteActionTooltip;
+
+  /// The label for the select all button on the text selection controls
+  String get selectAllActionLabel;
+
+  /// The select all shortcut label used by text selection controls
+  String get selectAllShortcut;
+
+  /// The tooltip for the select all action on the text selection controls
+  String get selectAllActionTooltip;
 
   /// The `FluentLocalizations` from the closest [Localizations] instance
   /// that encloses the given context.
@@ -94,85 +119,86 @@ abstract class FluentLocalizations {
   }
 }
 
-/// US English strings for the fluent widgets.
+// List of supported locales. This MUST be on sync with available intl_xx.arb
+// files in lib/l10n folder
+//
+// NOTE: This should be INTO DefaultFluentLocalizations as an static member but,
+// for some strange reason, doing so results in a very strange compile error.
+// This has been the only way to get it working without errors.
+
+// I tried to replace this with S.delegate.supportedLocales, but doing this
+// din't let me set the default value in FluentApp.supportedLocales
+const List<Locale> defaultSupportedLocales = <Locale>[
+  Locale('ar'),
+  Locale('de'),
+  Locale('en'),
+  Locale('es'),
+  Locale('fr'),
+  Locale('hi'),
+  Locale('pt'),
+  Locale('ru'),
+  Locale('zh'),
+];
+
+/// Strings for the fluent widgets.
 ///
 /// See also:
 ///
 ///  * [FluentApp.localizationsDelegates], which automatically includes
-///    [DefaultFluentLocalizations.delegate] by default.
-class DefaultFluentLocalizations implements FluentLocalizations {
-  const DefaultFluentLocalizations();
+///  * [DefaultFluentLocalizations.delegate] by default.
+class DefaultFluentLocalizations extends S implements FluentLocalizations {
+  final Locale locale;
+
+  DefaultFluentLocalizations._defaultFluentLocalizations(this.locale) {
+    S.load(locale);
+  }
+
+  static bool supports(Locale locale) {
+    return S.delegate.supportedLocales.contains(locale);
+  }
+
+  // Special cases - Those that include operating system dependent messages
+
+  String get _ctrlCmd {
+    if (defaultTargetPlatform == TargetPlatform.macOS) {
+      return 'Cmd';
+    }
+    return 'Ctrl';
+  }
+
+  String get _closeTabCmd {
+    if (defaultTargetPlatform == TargetPlatform.macOS) {
+      return 'W';
+    }
+    return 'F4';
+  }
+
+  // Close tab => <Message> (<shortcut>)
+  @override
+  String get closeTabLabel {
+    return '${super.closeTabLabelSuffix} ($_ctrlCmd+$_closeTabCmd)';
+  }
 
   @override
-  String get backButtonTooltip => 'Back';
+  String get cutShortcut => '$_ctrlCmd+X';
 
   @override
-  String get closeButtonLabel => 'Close';
+  String get copyShortcut => '$_ctrlCmd+C';
 
   @override
-  String get searchLabel => 'Search';
+  String get pasteShortcut => '$_ctrlCmd+V';
 
   @override
-  String get closeNavigationTooltip => 'Close Navigation';
+  String get selectAllShortcut => '$_ctrlCmd+A';
 
-  @override
-  String get openNavigationTooltip => 'Open Navigation';
-
-  @override
-  String get clickToSearch => 'Click to search';
-
-  @override
-  String get modalBarrierDismissLabel => 'Dismiss';
-
-  @override
-  String get minimizeWindowTooltip => 'Minimze';
-
-  @override
-  String get restoreWindowTooltip => 'Restore';
-
-  @override
-  String get closeWindowTooltip => 'Close';
-
-  @override
-  String get dialogLabel => 'Dialog';
-
-  @override
-  String get cutButtonLabel => 'Cut';
-
-  @override
-  String get copyButtonLabel => 'Copy';
-
-  @override
-  String get pasteButtonLabel => 'Paste';
-
-  @override
-  String get selectAllButtonLabel => 'Select all';
-
-  @override
-  String get newTabLabel => 'Add new tab';
-
-  @override
-  String get closeTabLabel => 'Close tab (Ctrl+F4)';
-
-  @override
-  String get scrollTabBackwardLabel => 'Scroll tab list backward';
-
-  @override
-  String get scrollTabForwardLabel => 'Scroll tab list forward';
-
-  @override
-  String get noResultsFoundLabel => 'No results found';
-
-  /// Creates an object that provides US English resource values for the material
+  /// Creates an object that provides localized resource values for the fluent
   /// library widgets.
   ///
-  /// The [locale] parameter is ignored.
-  ///
   /// This method is typically used to create a [LocalizationsDelegate].
-  /// The [MaterialApp] does so by default.
+  /// The [FluentApp] does so by default.
   static Future<FluentLocalizations> load(Locale locale) {
     return SynchronousFuture<FluentLocalizations>(
-        const DefaultFluentLocalizations());
+        DefaultFluentLocalizations._defaultFluentLocalizations(locale));
   }
 
   static const LocalizationsDelegate<FluentLocalizations> delegate =
@@ -184,15 +210,19 @@ class _FluentLocalizationsDelegate
   const _FluentLocalizationsDelegate();
 
   @override
-  bool isSupported(Locale locale) => locale.languageCode == 'en';
+  bool isSupported(Locale locale) {
+    return DefaultFluentLocalizations.supports(locale);
+    // defaultSupportedLocales.contains(locale);
+  }
 
   @override
-  Future<FluentLocalizations> load(Locale locale) =>
-      DefaultFluentLocalizations.load(locale);
+  Future<FluentLocalizations> load(Locale locale) {
+    return DefaultFluentLocalizations.load(locale);
+  }
 
   @override
   bool shouldReload(_FluentLocalizationsDelegate old) => false;
 
   @override
-  String toString() => 'DefaultFluentLocalizations.delegate(en_US)';
+  String toString() => DefaultFluentLocalizations.delegate.toString();
 }

@@ -1,25 +1,25 @@
-import 'package:bitsdojo_window/bitsdojo_window.dart';
-import 'package:example/screens/icons.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart' as flutter_acrylic;
 import 'package:provider/provider.dart';
 import 'package:system_theme/system_theme.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/link.dart';
 import 'package:url_strategy/url_strategy.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'screens/colors.dart';
+import 'screens/flyouts.dart';
 import 'screens/forms.dart';
+import 'screens/icons.dart';
 import 'screens/inputs.dart';
 import 'screens/mobile.dart';
+import 'screens/commandbars.dart';
 import 'screens/others.dart';
 import 'screens/settings.dart';
 import 'screens/typography.dart';
 import 'theme.dart';
 
 const String appTitle = 'Fluent UI Showcase for Flutter';
-
-late bool darkMode;
 
 /// Checks if the current environment is a desktop environment.
 bool get isDesktop {
@@ -34,38 +34,33 @@ bool get isDesktop {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // if it's on the web, windows or android, load the accent color
+  if (kIsWeb ||
+      [TargetPlatform.windows, TargetPlatform.android]
+          .contains(defaultTargetPlatform)) {
+    SystemTheme.accentColor.load();
+  }
+
   setPathUrlStrategy();
 
-  // The platforms the plugin support (01/04/2021 - DD/MM/YYYY):
-  //   - Windows
-  //   - Web
-  //   - Android
-  if (defaultTargetPlatform == TargetPlatform.windows ||
-      defaultTargetPlatform == TargetPlatform.android ||
-      kIsWeb) {
-    darkMode = await SystemTheme.darkMode;
-    await SystemTheme.accentInstance.load();
-  } else {
-    darkMode = true;
-  }
-  if (!kIsWeb &&
-      [TargetPlatform.windows, TargetPlatform.linux]
-          .contains(defaultTargetPlatform)) {
+  if (isDesktop) {
     await flutter_acrylic.Window.initialize();
+    await WindowManager.instance.ensureInitialized();
+    windowManager.waitUntilReadyToShow().then((_) async {
+      await windowManager.setTitleBarStyle(
+        TitleBarStyle.hidden,
+        windowButtonVisibility: false,
+      );
+      await windowManager.setSize(const Size(755, 545));
+      await windowManager.setMinimumSize(const Size(755, 545));
+      await windowManager.center();
+      await windowManager.show();
+      await windowManager.setPreventClose(true);
+      await windowManager.setSkipTaskbar(false);
+    });
   }
 
   runApp(const MyApp());
-
-  if (isDesktop) {
-    doWhenWindowReady(() {
-      final win = appWindow;
-      win.minSize = const Size(410, 540);
-      win.size = const Size(755, 545);
-      win.alignment = Alignment.center;
-      win.title = appTitle;
-      win.show();
-    });
-  }
 }
 
 class MyApp extends StatelessWidget {
@@ -81,22 +76,37 @@ class MyApp extends StatelessWidget {
           title: appTitle,
           themeMode: appTheme.mode,
           debugShowCheckedModeBanner: false,
-          initialRoute: '/',
-          routes: {'/': (_) => const MyHomePage()},
-          theme: ThemeData(
+          home: const MyHomePage(),
+          color: appTheme.color,
+          darkTheme: ThemeData(
+            brightness: Brightness.dark,
             accentColor: appTheme.color,
-            brightness: appTheme.mode == ThemeMode.system
-                ? darkMode
-                    ? Brightness.dark
-                    : Brightness.light
-                : appTheme.mode == ThemeMode.dark
-                    ? Brightness.dark
-                    : Brightness.light,
             visualDensity: VisualDensity.standard,
             focusTheme: FocusThemeData(
               glowFactor: is10footScreen() ? 2.0 : 0.0,
             ),
           ),
+          theme: ThemeData(
+            accentColor: appTheme.color,
+            visualDensity: VisualDensity.standard,
+            focusTheme: FocusThemeData(
+              glowFactor: is10footScreen() ? 2.0 : 0.0,
+            ),
+          ),
+          builder: (context, child) {
+            return Directionality(
+              textDirection: appTheme.textDirection,
+              child: NavigationPaneTheme(
+                data: NavigationPaneThemeData(
+                  backgroundColor: appTheme.windowEffect !=
+                          flutter_acrylic.WindowEffect.disabled
+                      ? Colors.transparent
+                      : null,
+                ),
+                child: child!,
+              ),
+            );
+          },
         );
       },
     );
@@ -110,17 +120,23 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with WindowListener {
   bool value = false;
 
   int index = 0;
 
-  final colorsController = ScrollController();
   final settingsController = ScrollController();
+  final viewKey = GlobalKey();
+
+  @override
+  void initState() {
+    windowManager.addListener(this);
+    super.initState();
+  }
 
   @override
   void dispose() {
-    colorsController.dispose();
+    windowManager.removeListener(this);
     settingsController.dispose();
     super.dispose();
   }
@@ -129,20 +145,20 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     final appTheme = context.watch<AppTheme>();
     return NavigationView(
+      key: viewKey,
       appBar: NavigationAppBar(
-        // height: !kIsWeb ? appWindow.titleBarHeight : 31.0,
         title: () {
           if (kIsWeb) return const Text(appTitle);
-          return MoveWindow(
-            child: const Align(
-              alignment: Alignment.centerLeft,
+          return const DragToMoveArea(
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
               child: Text(appTitle),
             ),
           );
         }(),
         actions: kIsWeb
             ? null
-            : MoveWindow(
+            : DragToMoveArea(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: const [Spacer(), WindowButtons()],
@@ -165,48 +181,15 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ),
         displayMode: appTheme.displayMode,
-        indicatorBuilder: ({
-          required BuildContext context,
-          required NavigationPane pane,
-          Axis? axis,
-          required Widget child,
-        }) {
-          if (pane.selected == null) return child;
-          axis ??= Axis.horizontal;
-          assert(debugCheckHasFluentTheme(context));
-          final theme = NavigationPaneTheme.of(context);
+        indicator: () {
           switch (appTheme.indicator) {
             case NavigationIndicators.end:
-              return EndNavigationIndicator(
-                index: pane.selected!,
-                offsets: () =>
-                    pane.effectiveItems.getPaneItemsOffsets(pane.paneKey),
-                sizes: pane.effectiveItems.getPaneItemsSizes,
-                child: child,
-                color: theme.highlightColor,
-                curve: theme.animationCurve ?? Curves.linear,
-                axis: axis,
-              );
+              return const EndNavigationIndicator();
             case NavigationIndicators.sticky:
-              return NavigationPane.defaultNavigationIndicator(
-                context: context,
-                axis: axis,
-                pane: pane,
-                child: child,
-              );
             default:
-              return NavigationIndicator(
-                index: pane.selected!,
-                offsets: () =>
-                    pane.effectiveItems.getPaneItemsOffsets(pane.paneKey),
-                sizes: pane.effectiveItems.getPaneItemsSizes,
-                child: child,
-                color: theme.highlightColor,
-                curve: theme.animationCurve ?? Curves.linear,
-                axis: axis,
-              );
+              return const StickyNavigationIndicator();
           }
-        },
+        }(),
         items: [
           // It doesn't look good when resizing from compact to open
           // PaneItemHeader(header: Text('User Interaction')),
@@ -236,6 +219,14 @@ class _MyHomePageState extends State<MyHomePage> {
             title: const Text('Mobile'),
           ),
           PaneItem(
+            icon: const Icon(FluentIcons.toolbox),
+            title: const Text('Command bars'),
+          ),
+          PaneItem(
+            icon: const Icon(FluentIcons.pop_expand),
+            title: const Text('Popups, Flyouts and Context Menus'),
+          ),
+          PaneItem(
             icon: Icon(
               appTheme.displayMode == PaneDisplayMode.top
                   ? FluentIcons.more
@@ -258,26 +249,57 @@ class _MyHomePageState extends State<MyHomePage> {
             icon: const Icon(FluentIcons.settings),
             title: const Text('Settings'),
           ),
-          PaneItemAction(
+          _LinkPaneItemAction(
             icon: const Icon(FluentIcons.open_source),
             title: const Text('Source code'),
-            onTap: () {
-              launch('https://github.com/bdlukaa/fluent_ui');
-            },
+            link: 'https://github.com/bdlukaa/fluent_ui',
           ),
         ],
       ),
       content: NavigationBody(index: index, children: [
         const InputsPage(),
         const Forms(),
-        ColorsPage(controller: colorsController),
+        const ColorsPage(),
         const IconsPage(),
         const TypographyPage(),
         const Mobile(),
+        const CommandBars(),
+        const FlyoutShowcase(),
         const Others(),
         Settings(controller: settingsController),
       ]),
     );
+  }
+
+  @override
+  void onWindowClose() async {
+    bool _isPreventClose = await windowManager.isPreventClose();
+    if (_isPreventClose) {
+      showDialog(
+        context: context,
+        builder: (_) {
+          return ContentDialog(
+            title: const Text('Confirm close'),
+            content: const Text('Are you sure you want to close this window?'),
+            actions: [
+              FilledButton(
+                child: const Text('Yes'),
+                onPressed: () {
+                  Navigator.pop(context);
+                  windowManager.destroy();
+                },
+              ),
+              Button(
+                child: const Text('No'),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 }
 
@@ -286,47 +308,56 @@ class WindowButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    assert(debugCheckHasFluentTheme(context));
-    assert(debugCheckHasFluentLocalizations(context));
     final ThemeData theme = FluentTheme.of(context);
-    final buttonColors = WindowButtonColors(
-      iconNormal: theme.inactiveColor,
-      iconMouseDown: theme.inactiveColor,
-      iconMouseOver: theme.inactiveColor,
-      mouseOver: ButtonThemeData.buttonColor(
-          theme.brightness, {ButtonStates.hovering}),
-      mouseDown: ButtonThemeData.buttonColor(
-          theme.brightness, {ButtonStates.pressing}),
+
+    return SizedBox(
+      width: 138,
+      height: 50,
+      child: WindowCaption(
+        brightness: theme.brightness,
+        backgroundColor: Colors.transparent,
+      ),
     );
-    final closeButtonColors = WindowButtonColors(
-      mouseOver: Colors.red,
-      mouseDown: Colors.red.dark,
-      iconNormal: theme.inactiveColor,
-      iconMouseOver: Colors.red.basedOnLuminance(),
-      iconMouseDown: Colors.red.dark.basedOnLuminance(),
+  }
+}
+
+class _LinkPaneItemAction extends PaneItem {
+  _LinkPaneItemAction({
+    required Widget icon,
+    required this.link,
+    title,
+    infoBadge,
+    focusNode,
+    autofocus = false,
+  }) : super(
+          icon: icon,
+          title: title,
+          infoBadge: infoBadge,
+          focusNode: focusNode,
+          autofocus: autofocus,
+        );
+
+  final String link;
+
+  @override
+  Widget build(
+    BuildContext context,
+    bool selected,
+    VoidCallback? onPressed, {
+    PaneDisplayMode? displayMode,
+    bool showTextOnTop = true,
+    bool? autofocus,
+  }) {
+    return Link(
+      uri: Uri.parse(link),
+      builder: (context, followLink) => super.build(
+        context,
+        selected,
+        followLink,
+        displayMode: displayMode,
+        showTextOnTop: showTextOnTop,
+        autofocus: autofocus,
+      ),
     );
-    return Row(children: [
-      Tooltip(
-        message: FluentLocalizations.of(context).minimizeWindowTooltip,
-        child: MinimizeWindowButton(colors: buttonColors),
-      ),
-      Tooltip(
-        message: FluentLocalizations.of(context).restoreWindowTooltip,
-        child: WindowButton(
-          colors: buttonColors,
-          iconBuilder: (context) {
-            if (appWindow.isMaximized) {
-              return RestoreIcon(color: context.iconColor);
-            }
-            return MaximizeIcon(color: context.iconColor);
-          },
-          onPressed: appWindow.maximizeOrRestore,
-        ),
-      ),
-      Tooltip(
-        message: FluentLocalizations.of(context).closeWindowTooltip,
-        child: CloseWindowButton(colors: closeButtonColors),
-      ),
-    ]);
   }
 }

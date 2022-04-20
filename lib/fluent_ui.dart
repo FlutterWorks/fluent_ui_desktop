@@ -23,7 +23,11 @@ export 'package:flutter/material.dart'
         kThemeAnimationDuration,
         TooltipVisibility,
         TooltipTriggerMode,
-        TextInputAction;
+        TextInputAction,
+        MaterialLocalizations,
+        TextSelectionTheme,
+        TextSelectionThemeData,
+        SelectableText;
 export 'package:scroll_pos/scroll_pos.dart';
 
 export 'src/app.dart';
@@ -61,6 +65,8 @@ export 'src/controls/navigation/tree_view.dart';
 
 export 'src/controls/surfaces/calendar/calendar_view.dart';
 export 'src/controls/surfaces/bottom_sheet.dart';
+export 'src/controls/surfaces/card.dart';
+export 'src/controls/surfaces/commandbar.dart';
 export 'src/controls/surfaces/dialog.dart';
 export 'src/controls/surfaces/expander.dart';
 export 'src/controls/surfaces/flyout/flyout.dart';
@@ -82,13 +88,17 @@ export 'src/controls/form/pickers/date_picker.dart';
 export 'src/controls/form/pickers/time_picker.dart';
 export 'src/controls/form/text_form_box.dart';
 export 'src/controls/form/form_row.dart';
+export 'src/controls/form/selection_controls.dart';
+
+export 'src/layout/dynamic_overflow.dart';
 
 export 'src/styles/motion/page_transitions.dart';
 export 'src/styles/acrylic.dart';
-export 'src/styles/color.dart';
+export 'src/styles/color.dart' hide ColorConst;
 export 'src/styles/mica.dart';
 export 'src/styles/theme.dart';
 export 'src/styles/typography.dart';
 
 export 'src/styles/focus.dart';
+export 'src/utils/horizontal_scroll_view.dart';
 export 'src/utils/label.dart';

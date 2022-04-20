@@ -105,8 +105,7 @@ class Expander extends StatefulWidget {
   /// The background color of the header.
   final ButtonState<Color>? headerBackgroundColor;
 
-  /// The content color of the header. If null, [ThemeData.acrylicBackgroundColor]
-  /// is used
+  /// The content color of the header
   final Color? contentBackgroundColor;
 
   @override
@@ -115,10 +114,10 @@ class Expander extends StatefulWidget {
 
 class ExpanderState extends State<Expander>
     with SingleTickerProviderStateMixin {
-  late ThemeData theme;
+  late ThemeData _theme;
 
-  late bool _open;
-  bool get open => _open;
+  bool? _open;
+  bool get open => _open ?? false;
   set open(bool value) {
     if (_open != value) _handlePressed();
   }
@@ -128,26 +127,35 @@ class ExpanderState extends State<Expander>
   @override
   void initState() {
     super.initState();
-    _open = widget.initiallyExpanded;
     _controller = AnimationController(
       vsync: this,
       duration: widget.animationDuration ?? const Duration(milliseconds: 150),
     );
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _theme = FluentTheme.of(context);
+    if (_open == null) {
+      _open = !widget.initiallyExpanded;
+      open = widget.initiallyExpanded;
+    }
+  }
+
   void _handlePressed() {
     if (open) {
       _controller.animateTo(
         0.0,
-        duration: widget.animationDuration ?? theme.fastAnimationDuration,
-        curve: widget.animationCurve ?? theme.animationCurve,
+        duration: widget.animationDuration ?? _theme.fastAnimationDuration,
+        curve: widget.animationCurve ?? _theme.animationCurve,
       );
       _open = false;
     } else {
       _controller.animateTo(
         1.0,
-        duration: widget.animationDuration ?? theme.fastAnimationDuration,
-        curve: widget.animationCurve ?? theme.animationCurve,
+        duration: widget.animationDuration ?? _theme.fastAnimationDuration,
+        curve: widget.animationCurve ?? _theme.animationCurve,
       );
       _open = true;
     }
@@ -198,7 +206,6 @@ class ExpanderState extends State<Expander>
   @override
   Widget build(BuildContext context) {
     assert(debugCheckHasFluentTheme(context));
-    theme = FluentTheme.of(context);
     final children = [
       HoverButton(
         onPressed: _handlePressed,
@@ -208,40 +215,40 @@ class ExpanderState extends State<Expander>
             height: widget.headerHeight,
             decoration: BoxDecoration(
               color: widget.headerBackgroundColor?.resolve(states) ??
-                  backgroundColor(theme, states),
+                  backgroundColor(_theme, states),
               border: Border.all(
                 width: borderSize,
-                color: borderColor(theme, states),
+                color: borderColor(_theme, states),
               ),
               borderRadius: BorderRadius.vertical(
                 top: const Radius.circular(4.0),
                 bottom: Radius.circular(open ? 0.0 : 4.0),
               ),
             ),
-            padding: const EdgeInsets.only(left: 16.0),
-            alignment: Alignment.centerLeft,
+            padding: const EdgeInsetsDirectional.only(start: 16.0),
+            alignment: AlignmentDirectional.centerStart,
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               if (widget.leading != null)
                 Padding(
-                  padding: const EdgeInsets.only(right: 10.0),
+                  padding: const EdgeInsetsDirectional.only(end: 10.0),
                   child: widget.leading!,
                 ),
               Expanded(child: widget.header),
               if (widget.trailing != null)
                 Padding(
-                  padding: const EdgeInsets.only(left: 20.0),
+                  padding: const EdgeInsetsDirectional.only(start: 20.0),
                   child: widget.trailing!,
                 ),
               Container(
-                margin: EdgeInsets.only(
-                  left: widget.trailing != null ? 8.0 : 20.0,
-                  right: 8.0,
+                margin: EdgeInsetsDirectional.only(
+                  start: widget.trailing != null ? 8.0 : 20.0,
+                  end: 8.0,
                   top: 8.0,
                   bottom: 8.0,
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 10.0),
                 decoration: BoxDecoration(
-                  color: ButtonThemeData.uncheckedInputColor(theme, states),
+                  color: ButtonThemeData.uncheckedInputColor(_theme, states),
                   borderRadius: BorderRadius.circular(4.0),
                 ),
                 alignment: Alignment.center,
@@ -269,10 +276,10 @@ class ExpanderState extends State<Expander>
           decoration: BoxDecoration(
             border: Border.all(
               width: borderSize,
-              color: borderColor(theme, {ButtonStates.none}),
+              color: borderColor(_theme, {ButtonStates.none}),
             ),
             color: widget.contentBackgroundColor ??
-                backgroundColor(theme, {ButtonStates.none}),
+                backgroundColor(_theme, {ButtonStates.none}),
             borderRadius:
                 const BorderRadius.vertical(bottom: Radius.circular(4.0)),
           ),

@@ -35,7 +35,11 @@ class FluentTheme extends StatelessWidget {
       data: data,
       child: IconTheme(
         data: data.iconTheme,
-        child: child,
+        child: AnimatedDefaultTextStyle(
+          style: data.typography.body!,
+          duration: kThemeAnimationDuration,
+          child: child,
+        ),
       ),
     );
   }
@@ -153,7 +157,7 @@ extension BrightnessExtension on Brightness {
   Brightness get opposite => isLight ? Brightness.dark : Brightness.light;
 }
 
-const standartCurve = Curves.easeInOut;
+const standardCurve = Curves.easeInOut;
 
 /// Defines the default theme for a [FluentApp] or [FluentTheme].
 @immutable
@@ -172,6 +176,8 @@ class ThemeData with Diagnosticable {
   final Color scaffoldBackgroundColor;
   final Color acrylicBackgroundColor;
   final Color micaBackgroundColor;
+  final Color menuColor;
+  final Color cardColor;
 
   final Duration fasterAnimationDuration;
   final Duration fastAnimationDuration;
@@ -245,6 +251,8 @@ class ThemeData with Diagnosticable {
     required this.snackbarTheme,
     required this.pillButtonBarTheme,
     required this.bottomSheetTheme,
+    required this.menuColor,
+    required this.cardColor,
   });
 
   static ThemeData light() {
@@ -272,6 +280,8 @@ class ThemeData with Diagnosticable {
     Color? uncheckedColor,
     Color? checkedColor,
     Color? borderInputColor,
+    Color? menuColor,
+    Color? cardColor,
     Duration? fasterAnimationDuration,
     Duration? fastAnimationDuration,
     Duration? mediumAnimationDuration,
@@ -303,11 +313,11 @@ class ThemeData with Diagnosticable {
     final bool isLight = brightness == Brightness.light;
 
     visualDensity ??= VisualDensity.adaptivePlatformDensity;
-    fasterAnimationDuration ??= const Duration(milliseconds: 90);
-    fastAnimationDuration ??= const Duration(milliseconds: 150);
-    mediumAnimationDuration ??= const Duration(milliseconds: 300);
-    slowAnimationDuration ??= const Duration(milliseconds: 500);
-    animationCurve ??= standartCurve;
+    fasterAnimationDuration ??= const Duration(milliseconds: 83);
+    fastAnimationDuration ??= const Duration(milliseconds: 167);
+    mediumAnimationDuration ??= const Duration(milliseconds: 250);
+    slowAnimationDuration ??= const Duration(milliseconds: 358);
+    animationCurve ??= standardCurve;
     accentColor ??= Colors.blue;
     activeColor ??= Colors.white;
     inactiveColor ??= isLight ? Colors.black : Colors.white;
@@ -316,8 +326,7 @@ class ThemeData with Diagnosticable {
     disabledColor ??=
         isLight ? const Color(0xFF838383) : Colors.grey[80].withOpacity(0.6);
     shadowColor ??= isLight ? Colors.black : Colors.grey[130];
-    scaffoldBackgroundColor ??=
-        isLight ? const Color(0xFFf9f9f9) : const Color(0xFF272727);
+    scaffoldBackgroundColor ??= Colors.white.withOpacity(0.025);
     acrylicBackgroundColor ??= isLight
         ? const Color.fromARGB(204, 255, 255, 255)
         : const Color(0x7F1e1e1e);
@@ -330,7 +339,9 @@ class ThemeData with Diagnosticable {
     borderInputColor ??= isLight
         ? const Color.fromRGBO(0, 0, 0, 0.4458)
         : const Color.fromRGBO(255, 255, 255, 0.5442);
-    typography = Typography.standard(brightness: brightness)
+    menuColor ??= isLight ? const Color(0xFFf9f9f9) : const Color(0xFF2c2c2c);
+    cardColor ??= isLight ? const Color(0xFFf3f3f3) : const Color(0xFF2e2e2e);
+    typography = Typography.fromBrightness(brightness: brightness)
         .merge(typography)
         .apply(fontFamily: fontFamily);
     focusTheme = FocusThemeData.standard(
@@ -355,7 +366,10 @@ class ThemeData with Diagnosticable {
       animationDuration: fastAnimationDuration,
       backgroundColor: micaBackgroundColor,
       disabledColor: disabledColor,
-      highlightColor: accentColor,
+      highlightColor: accentColor.resolveFromReverseBrightness(
+        brightness,
+        level: brightness.isDark ? 2 : 0,
+      ),
       typography: typography,
       inactiveColor: inactiveColor,
     );
@@ -408,6 +422,8 @@ class ThemeData with Diagnosticable {
       snackbarTheme: snackbarTheme,
       pillButtonBarTheme: pillButtonBarTheme,
       bottomSheetTheme: bottomSheetTheme,
+      menuColor: menuColor,
+      cardColor: cardColor,
     );
   }
 
@@ -432,6 +448,7 @@ class ThemeData with Diagnosticable {
       uncheckedColor: Color.lerp(a.uncheckedColor, b.uncheckedColor, t)!,
       checkedColor: Color.lerp(a.checkedColor, b.checkedColor, t)!,
       borderInputColor: Color.lerp(a.borderInputColor, b.borderInputColor, t)!,
+      cardColor: Color.lerp(a.cardColor, b.cardColor, t)!,
       fasterAnimationDuration:
           lerpDuration(a.fasterAnimationDuration, b.fasterAnimationDuration, t),
       fastAnimationDuration:
@@ -472,6 +489,7 @@ class ThemeData with Diagnosticable {
           a.pillButtonBarTheme, b.pillButtonBarTheme, t),
       bottomSheetTheme:
           BottomSheetThemeData.lerp(a.bottomSheetTheme, b.bottomSheetTheme, t),
+      menuColor: Color.lerp(a.menuColor, b.menuColor, t)!,
     );
   }
 
@@ -491,6 +509,8 @@ class ThemeData with Diagnosticable {
     Color? uncheckedColor,
     Color? checkedColor,
     Color? borderInputColor,
+    Color? menuColor,
+    Color? cardColor,
     Duration? fasterAnimationDuration,
     Duration? fastAnimationDuration,
     Duration? mediumAnimationDuration,
@@ -536,6 +556,8 @@ class ThemeData with Diagnosticable {
       acrylicBackgroundColor:
           acrylicBackgroundColor ?? this.acrylicBackgroundColor,
       micaBackgroundColor: micaBackgroundColor ?? this.micaBackgroundColor,
+      menuColor: menuColor ?? this.menuColor,
+      cardColor: cardColor ?? this.cardColor,
       fasterAnimationDuration:
           fasterAnimationDuration ?? this.fasterAnimationDuration,
       fastAnimationDuration:
@@ -581,7 +603,9 @@ class ThemeData with Diagnosticable {
       ..add(ColorProperty('shadowColor', shadowColor))
       ..add(ColorProperty('scaffoldBackgroundColor', scaffoldBackgroundColor))
       ..add(ColorProperty('acrylicBackgroundColor', acrylicBackgroundColor))
-      ..add(ColorProperty('micaBackgroundColor', micaBackgroundColor));
+      ..add(ColorProperty('micaBackgroundColor', micaBackgroundColor))
+      ..add(ColorProperty('menuColor', menuColor))
+      ..add(ColorProperty('cardColor', cardColor));
     properties.add(EnumProperty('brightness', brightness));
     properties.add(DiagnosticsProperty<Duration>(
       'slowAnimationDuration',

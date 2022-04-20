@@ -109,7 +109,7 @@ class ButtonTheme extends InheritedTheme {
     return Builder(builder: (BuildContext context) {
       return ButtonTheme(
         key: key,
-        data: _getInheritedButtonThemeData(context).merge(data),
+        data: _getInheritedButtonThemeData(context)?.merge(data) ?? data,
         child: child,
       );
     });
@@ -132,10 +132,10 @@ class ButtonTheme extends InheritedTheme {
         );
   }
 
-  static ButtonThemeData _getInheritedButtonThemeData(BuildContext context) {
+  static ButtonThemeData? _getInheritedButtonThemeData(BuildContext context) {
     final ButtonTheme? buttonTheme =
         context.dependOnInheritedWidgetOfExactType<ButtonTheme>();
-    return buttonTheme?.data ?? FluentTheme.of(context).buttonTheme;
+    return buttonTheme?.data;
   }
 
   @override
@@ -258,12 +258,12 @@ class ButtonThemeData with Diagnosticable {
   static Color uncheckedInputColor(ThemeData style, Set<ButtonStates> states) {
     if (style.brightness == Brightness.light) {
       if (states.isDisabled) return style.disabledColor;
-      if (states.isPressing) return const Color(0xFF221D08).withOpacity(0.255);
-      if (states.isHovering) return const Color(0xFF221D08).withOpacity(0.075);
+      if (states.isPressing) return const Color(0xFF221D08).withOpacity(0.155);
+      if (states.isHovering) return const Color(0xFF221D08).withOpacity(0.055);
       return Colors.transparent;
     } else {
       if (states.isDisabled) return style.disabledColor;
-      if (states.isPressing) return const Color(0xFFFFF3E8).withOpacity(0.285);
+      if (states.isPressing) return const Color(0xFFFFF3E8).withOpacity(0.080);
       if (states.isHovering) return const Color(0xFFFFF3E8).withOpacity(0.12);
       return Colors.transparent;
     }

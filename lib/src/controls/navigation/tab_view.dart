@@ -64,6 +64,7 @@ class TabView extends StatefulWidget {
     this.showScrollButtons = true,
     this.wheelScroll = false,
     this.scrollController,
+    this.minTabWidth = _kMinTileWidth,
     this.maxTabWidth = _kMaxTileWidth,
     this.closeButtonVisibility = CloseButtonVisibilityMode.always,
     this.tabWidthBehavior = TabWidthBehavior.equal,
@@ -106,6 +107,11 @@ class TabView extends StatefulWidget {
   /// Called when the tabs are reordered. If null,
   /// reordering is disabled. It's disabled by default.
   final ReorderCallback? onReorder;
+
+  /// The min width a tab can have. Must not be negative.
+  ///
+  /// Default to 80 logical pixels
+  final double minTabWidth;
 
   /// The max width a tab can have. Must not be negative.
   ///
@@ -256,18 +262,19 @@ class _TabViewState extends State<TabView> {
         divider(index),
       ]),
     );
+    final minWidth = () {
+      switch (widget.tabWidthBehavior) {
+        case TabWidthBehavior.sizeToContent:
+          return null;
+        default:
+          return preferredTabWidth;
+      }
+    }();
     return AnimatedContainer(
       key: ValueKey<Tab>(tab),
       constraints: BoxConstraints(
-        maxWidth: () {
-          switch (widget.tabWidthBehavior) {
-            case TabWidthBehavior.sizeToContent:
-              return double.infinity;
-            default:
-              return preferredTabWidth;
-          }
-        }(),
-        minWidth: preferredTabWidth,
+        maxWidth: minWidth ?? double.infinity,
+        minWidth: minWidth ?? 0.0,
       ),
       duration: FluentTheme.of(context).fastAnimationDuration,
       curve: FluentTheme.of(context).animationCurve,
@@ -334,8 +341,10 @@ class _TabViewState extends State<TabView> {
 
   @override
   Widget build(BuildContext context) {
+    assert(debugCheckHasDirectionality(context));
     assert(debugCheckHasFluentTheme(context));
     assert(debugCheckHasFluentLocalizations(context));
+    final TextDirection direction = Directionality.of(context);
     final ThemeData theme = FluentTheme.of(context);
     final localizations = FluentLocalizations.of(context);
 
@@ -369,7 +378,7 @@ class _TabViewState extends State<TabView> {
                 final double preferredTabWidth =
                     ((width - (widget.showNewButton ? _kButtonWidth : 0)) /
                             widget.tabs.length)
-                        .clamp(_kMinTileWidth, widget.maxTabWidth);
+                        .clamp(widget.minTabWidth, widget.maxTabWidth);
 
                 final Widget listView = Listener(
                   onPointerSignal: widget.wheelScroll
@@ -414,35 +423,51 @@ class _TabViewState extends State<TabView> {
                 bool scrollable = preferredTabWidth * widget.tabs.length >
                     width - (widget.showNewButton ? _kButtonWidth : 0);
 
+                final bool showScrollButtons =
+                    widget.showScrollButtons && scrollable;
+                final backwardButton = _buttonTabBuilder(
+                  context,
+                  const Icon(FluentIcons.caret_left_solid8, size: 10),
+                  !scrollController.canBackward
+                      ? () {
+                          if (direction == TextDirection.ltr) {
+                            scrollController.backward();
+                          } else {
+                            scrollController.forward();
+                          }
+                        }
+                      : null,
+                  localizations.scrollTabBackwardLabel,
+                );
+
+                final forwardButton = _buttonTabBuilder(
+                  context,
+                  const Icon(FluentIcons.caret_right_solid8, size: 10),
+                  !scrollController.canForward
+                      ? () {
+                          if (direction == TextDirection.ltr) {
+                            scrollController.forward();
+                          } else {
+                            scrollController.backward();
+                          }
+                        }
+                      : null,
+                  localizations.scrollTabForwardLabel,
+                );
+
                 return Row(children: [
-                  if (widget.showScrollButtons && scrollable)
-                    _buttonTabBuilder(
-                      context,
-                      const Icon(FluentIcons.caret_left_solid8, size: 10),
-                      !scrollController.canBackward
-                          ? () {
-                              scrollController.backward();
-                            }
-                          : null,
-                      localizations.scrollTabBackwardLabel,
-                    ),
+                  if (showScrollButtons)
+                    direction == TextDirection.ltr
+                        ? backwardButton
+                        : forwardButton,
                   if (scrollable)
                     Expanded(child: listView)
                   else
-                    Flexible(
-                      child: listView,
-                    ),
-                  if (widget.showScrollButtons && scrollable)
-                    _buttonTabBuilder(
-                      context,
-                      const Icon(FluentIcons.caret_right_solid8, size: 10),
-                      !scrollController.canForward
-                          ? () {
-                              scrollController.forward();
-                            }
-                          : null,
-                      localizations.scrollTabForwardLabel,
-                    ),
+                    Flexible(child: listView),
+                  if (showScrollButtons)
+                    direction == TextDirection.ltr
+                        ? forwardButton
+                        : backwardButton,
                   if (widget.showNewButton)
                     _buttonTabBuilder(
                       context,
@@ -467,51 +492,58 @@ class _TabViewState extends State<TabView> {
       if (widget.bodies.isNotEmpty)
         Expanded(child: widget.bodies[widget.currentIndex]),
     ]);
+    tabBar = ScrollConfiguration(
+      behavior: const _TabViewScrollBehavior(),
+      child: tabBar,
+    );
     if (widget.shortcutsEnabled) {
       void _onClosePressed() {
         widget.tabs[widget.currentIndex].onClosed?.call();
       }
 
-      return CallbackShortcuts(
-        bindings: {
-          const SingleActivator(LogicalKeyboardKey.f4, control: true):
-              _onClosePressed,
-          const SingleActivator(LogicalKeyboardKey.keyW, control: true):
-              _onClosePressed,
-          const SingleActivator(LogicalKeyboardKey.keyT, control: true): () {
-            widget.onNewPressed?.call();
-          },
-          ...Map.fromIterable(
-            List<int>.generate(9, (index) => index),
-            key: (i) {
-              final digits = [
-                LogicalKeyboardKey.digit1,
-                LogicalKeyboardKey.digit2,
-                LogicalKeyboardKey.digit3,
-                LogicalKeyboardKey.digit4,
-                LogicalKeyboardKey.digit5,
-                LogicalKeyboardKey.digit6,
-                LogicalKeyboardKey.digit7,
-                LogicalKeyboardKey.digit8,
-                LogicalKeyboardKey.digit9,
-              ];
-              return SingleActivator(digits[i], control: true);
+      return FocusScope(
+        autofocus: true,
+        child: CallbackShortcuts(
+          bindings: {
+            const SingleActivator(LogicalKeyboardKey.f4, control: true):
+                _onClosePressed,
+            const SingleActivator(LogicalKeyboardKey.keyW, control: true):
+                _onClosePressed,
+            const SingleActivator(LogicalKeyboardKey.keyT, control: true): () {
+              widget.onNewPressed?.call();
             },
-            value: (index) {
-              return () {
-                // If it's the last, move to the last tab
-                if (index == 8) {
-                  widget.onChanged?.call(widget.tabs.length - 1);
-                } else {
-                  if (widget.tabs.length - 1 >= index) {
-                    widget.onChanged?.call(index);
+            ...Map.fromIterable(
+              List<int>.generate(9, (index) => index),
+              key: (i) {
+                final digits = [
+                  LogicalKeyboardKey.digit1,
+                  LogicalKeyboardKey.digit2,
+                  LogicalKeyboardKey.digit3,
+                  LogicalKeyboardKey.digit4,
+                  LogicalKeyboardKey.digit5,
+                  LogicalKeyboardKey.digit6,
+                  LogicalKeyboardKey.digit7,
+                  LogicalKeyboardKey.digit8,
+                  LogicalKeyboardKey.digit9,
+                ];
+                return SingleActivator(digits[i], control: true);
+              },
+              value: (index) {
+                return () {
+                  // If it's the last, move to the last tab
+                  if (index == 8) {
+                    widget.onChanged?.call(widget.tabs.length - 1);
+                  } else {
+                    if (widget.tabs.length - 1 >= index) {
+                      widget.onChanged?.call(index);
+                    }
                   }
-                }
-              };
-            },
-          ),
-        },
-        child: tabBar,
+                };
+              },
+            ),
+          },
+          child: tabBar,
+        ),
       );
     }
     return tabBar;
@@ -519,14 +551,17 @@ class _TabViewState extends State<TabView> {
 }
 
 class Tab {
+  /// Creates a tab.
   const Tab({
-    Key? key,
+    this.key,
     this.icon = const FlutterLogo(),
     required this.text,
     this.closeIcon = FluentIcons.chrome_close,
     this.onClosed,
     this.semanticLabel,
   });
+
+  final Key? key;
 
   /// The leading icon of the tab. [FlutterLogo] is used by default
   final Widget? icon;
@@ -614,6 +649,7 @@ class __TabState extends State<_Tab>
       }
     }();
     return HoverButton(
+      key: widget.tab.key,
       semanticLabel: widget.tab.semanticLabel ?? text,
       focusNode: widget.focusNode,
       onPressed: widget.onPressed,
@@ -766,4 +802,13 @@ class _TabPainter extends CustomPainter {
 
   @override
   bool shouldRebuildSemantics(_TabPainter oldDelegate) => false;
+}
+
+class _TabViewScrollBehavior extends ScrollBehavior {
+  const _TabViewScrollBehavior();
+
+  @override
+  Widget buildScrollbar(context, child, details) {
+    return child;
+  }
 }

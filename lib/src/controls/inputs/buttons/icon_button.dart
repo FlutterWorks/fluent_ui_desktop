@@ -1,5 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
+enum IconButtonMode { tiny, small, large }
+
 class IconButton extends BaseButton {
   const IconButton({
     Key? key,
@@ -9,6 +11,7 @@ class IconButton extends BaseButton {
     FocusNode? focusNode,
     bool autofocus = false,
     ButtonStyle? style,
+    this.iconButtonMode,
   }) : super(
           key: key,
           child: icon,
@@ -19,24 +22,30 @@ class IconButton extends BaseButton {
           style: style,
         );
 
+  final IconButtonMode? iconButtonMode;
+
   @override
   ButtonStyle defaultStyleOf(BuildContext context) {
     assert(debugCheckHasFluentTheme(context));
     final theme = FluentTheme.of(context);
-    final isSmall = SmallIconButton.of(context) != null;
+    final isIconSmall = SmallIconButton.of(context) != null ||
+        iconButtonMode == IconButtonMode.tiny;
+    final isSmall = iconButtonMode != null
+        ? iconButtonMode != IconButtonMode.large
+        : SmallIconButton.of(context) != null;
     return ButtonStyle(
-      iconSize: ButtonState.all(isSmall ? 12.0 : null),
+      iconSize: ButtonState.all(isIconSmall ? 11.0 : null),
       padding: ButtonState.all(isSmall
           ? const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0)
           : const EdgeInsets.all(8.0)),
       backgroundColor: ButtonState.resolveWith((states) {
         return states.isDisabled
             ? ButtonThemeData.buttonColor(theme.brightness, states)
-            : ButtonThemeData.uncheckedInputColor(theme, states)
-                .withOpacity(states.isNone ? 0 : 0.2);
+            : ButtonThemeData.uncheckedInputColor(theme, states);
       }),
       foregroundColor: ButtonState.resolveWith((states) {
         if (states.isDisabled) return theme.disabledColor;
+        return null;
       }),
       shape: ButtonState.all(RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(4.0),

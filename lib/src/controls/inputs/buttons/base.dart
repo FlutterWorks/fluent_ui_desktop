@@ -3,10 +3,10 @@ import 'package:flutter/foundation.dart';
 
 import 'package:fluent_ui/fluent_ui.dart';
 
-/// @{template fluent_ui.buttons.base}
+/// {@template fluent_ui.buttons.base}
 /// Buttons give people a way to trigger an action. They’re typically found in
 /// forms, dialog panels, and dialogs.
-/// @{end-template}
+/// {@end-template}
 ///
 /// See also:
 ///
@@ -117,8 +117,8 @@ class _BaseButtonState extends State<BaseButton> {
 
         final double? resolvedElevation =
             resolve<double?>((ButtonStyle? style) => style?.elevation);
-        final TextStyle? resolvedTextStyle =
-            resolve<TextStyle?>((ButtonStyle? style) => style?.textStyle);
+        final TextStyle? resolvedTextStyle = theme.typography.body?.merge(
+            resolve<TextStyle?>((ButtonStyle? style) => style?.textStyle));
         final Color? resolvedBackgroundColor =
             resolve<Color?>((ButtonStyle? style) => style?.backgroundColor);
         final Color? resolvedForegroundColor =
@@ -163,8 +163,10 @@ class _BaseButtonState extends State<BaseButton> {
                 color: resolvedForegroundColor,
                 size: iconSize ?? 14.0,
               ),
-              child: DefaultTextStyle(
-                style: (resolvedTextStyle ?? const TextStyle(inherit: true))
+              child: AnimatedDefaultTextStyle(
+                duration: FluentTheme.of(context).fastAnimationDuration,
+                curve: FluentTheme.of(context).animationCurve,
+                style: (resolvedTextStyle ?? const TextStyle())
                     .copyWith(color: resolvedForegroundColor),
                 textAlign: TextAlign.center,
                 child: widget.child,

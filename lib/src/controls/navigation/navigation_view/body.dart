@@ -49,16 +49,23 @@ class NavigationBody extends StatefulWidget {
   /// Optional number of items to assume builder can create.
   final int? itemCount;
 
-  /// The current page index. It must be greater than 0 and less
-  /// than [children.length] or [itemCount].
+  /// The current page index.
   final int index;
 
   /// The transition builder.
   ///
-  /// It can be detect the display mode of the [NavigationView] above
-  /// it, if any, and change the transition accordingly. By default,
-  /// if the display mode is top, [HorizontalSlidePageTransition] is
-  /// used, otherwise [DrillInPageTransition] is used.
+  /// It can be detect the display mode of the parent [NavigationView], if any,
+  /// and change the transition accordingly. By default, if the display mode is
+  /// top, [EntrancePageTransition] is used, otherwise [DrillInPageTransition]
+  /// is used.
+  ///
+  /// ```dart
+  /// NavigationBody(
+  ///   transitionBuilder: (child, animation) {
+  ///     return DrillInPageTransition(child: child, animation: animation);
+  ///   },
+  /// ),
+  /// ```
   final AnimatedSwitcherTransitionBuilder? transitionBuilder;
 
   /// The curve used by the transition. [NavigationPaneThemeData.animationCurve]
@@ -109,7 +116,7 @@ class _NavigationBodyState extends State<NavigationBody> {
   @override
   Widget build(BuildContext context) {
     assert(debugCheckHasFluentTheme(context));
-    final _body = _NavigationBody.maybeOf(context);
+    final _body = InheritedNavigationView.maybeOf(context);
     final theme = FluentTheme.of(context);
     final NavigationPaneThemeData paneTheme = NavigationPaneTheme.of(context);
     return Container(
@@ -139,10 +146,10 @@ class _NavigationBodyState extends State<NavigationBody> {
               animation: animation,
             );
           } else {
-            return HorizontalSlidePageTransition(
+            return EntrancePageTransition(
               child: child,
               animation: animation,
-              fromLeft: previousIndex > widget.index,
+              vertical: true,
             );
           }
         },
@@ -156,26 +163,101 @@ class _NavigationBodyState extends State<NavigationBody> {
   }
 }
 
-/// A widget that tells [NavigationBody] what's the panel display
-/// mode of the parent [NavigationView], if any.
-class _NavigationBody extends InheritedWidget {
-  const _NavigationBody({
+/// A widget that tells what's the the current state of the parent
+/// [NavigationView]
+///
+/// See also:
+///
+///  * [NavigationView], which provides the information for this
+///  * [NavigationBody], which is used to display the content
+class InheritedNavigationView extends InheritedWidget {
+  /// Creates an inherited navigation view.
+  const InheritedNavigationView({
     Key? key,
     required Widget child,
     required this.displayMode,
-    required this.minimalPaneOpen,
+    this.minimalPaneOpen = false,
+    this.pane,
+    this.oldIndex = 0,
+    this.itemIndex = -1,
   }) : super(key: key, child: child);
 
+  /// The current pane display mode.
   final PaneDisplayMode? displayMode;
+
+  /// Whether the minimal pane is open or not
   final bool minimalPaneOpen;
 
-  static _NavigationBody? maybeOf(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<_NavigationBody>();
+  /// The current navigation pane
+  final NavigationPane? pane;
+
+  /// The old index
+  final int oldIndex;
+
+  /// Used by [NavigationIndicator] to know what's the current index of the
+  /// item
+  final int itemIndex;
+
+  static InheritedNavigationView? maybeOf(BuildContext context) {
+    return context
+        .dependOnInheritedWidgetOfExactType<InheritedNavigationView>();
+  }
+
+  static InheritedNavigationView of(BuildContext context) {
+    return context
+        .dependOnInheritedWidgetOfExactType<InheritedNavigationView>()!;
+  }
+
+  static Widget merge({
+    Key? key,
+    required Widget child,
+    int? itemIndex,
+    NavigationPane? pane,
+    PaneDisplayMode? displayMode,
+    bool? minimalPaneOpen,
+    int? oldIndex,
+  }) {
+    return Builder(builder: (context) {
+      final current = InheritedNavigationView.maybeOf(context);
+      return InheritedNavigationView(
+        key: key,
+        child: child,
+        displayMode: displayMode ?? current?.displayMode,
+        minimalPaneOpen: minimalPaneOpen ?? current?.minimalPaneOpen ?? false,
+        itemIndex: itemIndex ?? current?.itemIndex ?? -1,
+        pane: pane ?? current?.pane,
+        oldIndex: oldIndex ?? current?.oldIndex ?? 0,
+      );
+    });
   }
 
   @override
-  bool updateShouldNotify(_NavigationBody oldWidget) {
+  bool updateShouldNotify(InheritedNavigationView oldWidget) {
     return oldWidget.displayMode != displayMode ||
-        oldWidget.minimalPaneOpen != minimalPaneOpen;
+        oldWidget.minimalPaneOpen != minimalPaneOpen ||
+        oldWidget.pane != pane ||
+        oldWidget.itemIndex != oldWidget.itemIndex;
+  }
+}
+
+/// Makes the [GlobalKey]s for [PaneItem]s accesible on the scope.
+class _PaneItemKeys extends InheritedWidget {
+  const _PaneItemKeys({
+    Key? key,
+    required Widget child,
+    required this.keys,
+  }) : super(key: key, child: child);
+
+  final Map<int, GlobalKey> keys;
+
+  static GlobalKey of(int index, BuildContext context) {
+    final reference =
+        context.dependOnInheritedWidgetOfExactType<_PaneItemKeys>()!;
+    return reference.keys[index]!;
+  }
+
+  @override
+  bool updateShouldNotify(_PaneItemKeys oldWidget) {
+    return keys != oldWidget.keys;
   }
 }

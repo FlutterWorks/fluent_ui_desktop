@@ -1,11 +1,12 @@
+// ignore_for_file: constant_identifier_names
+
 import 'package:flutter/foundation.dart';
 
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:flutter_acrylic/flutter_acrylic.dart' as flutter_acrylic;
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:provider/provider.dart';
 
 import '../theme.dart';
-import '../main.dart';
 
 const List<String> accentColorNames = [
   'System',
@@ -19,6 +20,62 @@ const List<String> accentColorNames = [
   'Green',
 ];
 
+bool get kIsWindowEffectsSupported {
+  return !kIsWeb &&
+      [
+        TargetPlatform.windows,
+        TargetPlatform.linux,
+        TargetPlatform.macOS,
+      ].contains(defaultTargetPlatform);
+}
+
+const _LinuxWindowEffects = [
+  WindowEffect.disabled,
+  WindowEffect.transparent,
+];
+
+const _WindowsWindowEffects = [
+  WindowEffect.disabled,
+  WindowEffect.solid,
+  WindowEffect.transparent,
+  WindowEffect.aero,
+  WindowEffect.acrylic,
+  WindowEffect.mica,
+  WindowEffect.tabbed,
+];
+
+const _MacosWindowEffects = [
+  WindowEffect.disabled,
+  WindowEffect.titlebar,
+  WindowEffect.selection,
+  WindowEffect.menu,
+  WindowEffect.popover,
+  WindowEffect.sidebar,
+  WindowEffect.headerView,
+  WindowEffect.sheet,
+  WindowEffect.windowBackground,
+  WindowEffect.hudWindow,
+  WindowEffect.fullScreenUI,
+  WindowEffect.toolTip,
+  WindowEffect.contentBackground,
+  WindowEffect.underWindowBackground,
+  WindowEffect.underPageBackground,
+];
+
+List<WindowEffect> get currentWindowEffects {
+  if (kIsWeb) return [];
+
+  if (defaultTargetPlatform == TargetPlatform.windows) {
+    return _WindowsWindowEffects;
+  } else if (defaultTargetPlatform == TargetPlatform.linux) {
+    return _LinuxWindowEffects;
+  } else if (defaultTargetPlatform == TargetPlatform.macOS) {
+    return _MacosWindowEffects;
+  }
+
+  return [];
+}
+
 class Settings extends StatelessWidget {
   const Settings({Key? key, this.controller}) : super(key: key);
 
@@ -26,156 +83,144 @@ class Settings extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    assert(debugCheckHasMediaQuery(context));
     final appTheme = context.watch<AppTheme>();
-    final tooltipThemeData = TooltipThemeData(decoration: () {
-      const radius = BorderRadius.zero;
-      final shadow = [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.2),
-          offset: const Offset(1, 1),
-          blurRadius: 10.0,
-        ),
-      ];
-      final border = Border.all(color: Colors.grey[100], width: 0.5);
-      if (FluentTheme.of(context).brightness == Brightness.light) {
-        return BoxDecoration(
-          color: Colors.white,
-          borderRadius: radius,
-          border: border,
-          boxShadow: shadow,
-        );
-      } else {
-        return BoxDecoration(
-          color: Colors.grey,
-          borderRadius: radius,
-          border: border,
-          boxShadow: shadow,
-        );
-      }
-    }());
-
     const spacer = SizedBox(height: 10.0);
     const biggerSpacer = SizedBox(height: 40.0);
-    return ScaffoldPage(
+    return ScaffoldPage.scrollable(
       header: const PageHeader(title: Text('Settings')),
-      content: ListView(
-        padding: EdgeInsets.only(
-          bottom: kPageDefaultVerticalPadding,
-          left: PageHeader.horizontalPadding(context),
-          right: PageHeader.horizontalPadding(context),
-        ),
-        controller: controller,
-        children: [
-          Text('Theme mode',
-              style: FluentTheme.of(context).typography.subtitle),
-          spacer,
-          ...List.generate(ThemeMode.values.length, (index) {
-            final mode = ThemeMode.values[index];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: RadioButton(
-                checked: appTheme.mode == mode,
-                onChanged: (value) {
-                  if (value) {
-                    appTheme.mode = mode;
+      scrollController: controller,
+      children: [
+        Text('Theme mode', style: FluentTheme.of(context).typography.subtitle),
+        spacer,
+        ...List.generate(ThemeMode.values.length, (index) {
+          final mode = ThemeMode.values[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: RadioButton(
+              checked: appTheme.mode == mode,
+              onChanged: (value) {
+                if (value) {
+                  appTheme.mode = mode;
+
+                  if (kIsWindowEffectsSupported) {
+                    // some window effects require on [dark] to look good.
+                    appTheme.setEffect(appTheme.windowEffect, context);
                   }
-                },
-                content: Text('$mode'.replaceAll('ThemeMode.', '')),
+                }
+              },
+              content: Text('$mode'.replaceAll('ThemeMode.', '')),
+            ),
+          );
+        }),
+        biggerSpacer,
+        Text(
+          'Navigation Pane Display Mode',
+          style: FluentTheme.of(context).typography.subtitle,
+        ),
+        spacer,
+        ...List.generate(PaneDisplayMode.values.length, (index) {
+          final mode = PaneDisplayMode.values[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: RadioButton(
+              checked: appTheme.displayMode == mode,
+              onChanged: (value) {
+                if (value) appTheme.displayMode = mode;
+              },
+              content: Text(
+                mode.toString().replaceAll('PaneDisplayMode.', ''),
               ),
+            ),
+          );
+        }),
+        biggerSpacer,
+        Text('Navigation Indicator',
+            style: FluentTheme.of(context).typography.subtitle),
+        spacer,
+        ...List.generate(NavigationIndicators.values.length, (index) {
+          final mode = NavigationIndicators.values[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: RadioButton(
+              checked: appTheme.indicator == mode,
+              onChanged: (value) {
+                if (value) appTheme.indicator = mode;
+              },
+              content: Text(
+                mode.toString().replaceAll('NavigationIndicators.', ''),
+              ),
+            ),
+          );
+        }),
+        biggerSpacer,
+        Text('Accent Color',
+            style: FluentTheme.of(context).typography.subtitle),
+        spacer,
+        Wrap(children: [
+          Tooltip(
+            child: _buildColorBlock(appTheme, systemAccentColor),
+            message: accentColorNames[0],
+          ),
+          ...List.generate(Colors.accentColors.length, (index) {
+            final color = Colors.accentColors[index];
+            return Tooltip(
+              message: accentColorNames[index + 1],
+              child: _buildColorBlock(appTheme, color),
             );
           }),
+        ]),
+        if (kIsWindowEffectsSupported) ...[
           biggerSpacer,
           Text(
-            'Navigation Pane Display Mode',
+            'Window Transparency (${defaultTargetPlatform.toString().replaceAll('TargetPlatform.', '')})',
             style: FluentTheme.of(context).typography.subtitle,
           ),
           spacer,
-          ...List.generate(PaneDisplayMode.values.length, (index) {
-            final mode = PaneDisplayMode.values[index];
+          ...List.generate(currentWindowEffects.length, (index) {
+            final mode = currentWindowEffects[index];
             return Padding(
               padding: const EdgeInsets.only(bottom: 8.0),
               child: RadioButton(
-                checked: appTheme.displayMode == mode,
+                checked: appTheme.windowEffect == mode,
                 onChanged: (value) {
-                  if (value) appTheme.displayMode = mode;
+                  if (value) {
+                    appTheme.windowEffect = mode;
+                    appTheme.setEffect(mode, context);
+                  }
                 },
                 content: Text(
-                  mode.toString().replaceAll('PaneDisplayMode.', ''),
+                  mode.toString().replaceAll('WindowEffect.', ''),
                 ),
               ),
             );
           }),
-          biggerSpacer,
-          Text('Navigation Indicator',
-              style: FluentTheme.of(context).typography.subtitle),
-          spacer,
-          ...List.generate(NavigationIndicators.values.length, (index) {
-            final mode = NavigationIndicators.values[index];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: RadioButton(
-                checked: appTheme.indicator == mode,
-                onChanged: (value) {
-                  if (value) appTheme.indicator = mode;
-                },
-                content: Text(
-                  mode.toString().replaceAll('NavigationIndicators.', ''),
-                ),
-              ),
-            );
-          }),
-          biggerSpacer,
-          Text('Accent Color',
-              style: FluentTheme.of(context).typography.subtitle),
-          spacer,
-          Wrap(children: [
-            Tooltip(
-              style: tooltipThemeData,
-              child: _buildColorBlock(appTheme, systemAccentColor),
-              message: accentColorNames[0],
-            ),
-            ...List.generate(Colors.accentColors.length, (index) {
-              final color = Colors.accentColors[index];
-              return Tooltip(
-                style: tooltipThemeData,
-                message: accentColorNames[index + 1],
-                child: _buildColorBlock(appTheme, color),
-              );
-            }),
-          ]),
-          if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) ...[
-            biggerSpacer,
-            Text('Window Transparency',
-                style: FluentTheme.of(context).typography.subtitle),
-            spacer,
-            ...List.generate(flutter_acrylic.WindowEffect.values.length,
-                (index) {
-              final mode = flutter_acrylic.WindowEffect.values[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: RadioButton(
-                  checked: appTheme.acrylicEffect == mode,
-                  onChanged: (value) {
-                    if (value) {
-                      appTheme.acrylicEffect = mode;
-                      flutter_acrylic.Window.setEffect(
-                        effect: mode,
-                        color: FluentTheme.of(context)
-                            .acrylicBackgroundColor
-                            .withOpacity(0.2),
-                        dark: darkMode,
-                      );
-                    }
-                  },
-                  content: Text(
-                    mode.toString().replaceAll('AcrylicEffect.', ''),
-                  ),
-                ),
-              );
-            }),
-          ],
         ],
-      ),
+        biggerSpacer,
+        Text('Text Direction',
+            style: FluentTheme.of(context).typography.subtitle),
+        spacer,
+        ...List.generate(TextDirection.values.length, (index) {
+          final direction = TextDirection.values[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: RadioButton(
+              checked: appTheme.textDirection == direction,
+              onChanged: (value) {
+                if (value) {
+                  appTheme.textDirection = direction;
+                }
+              },
+              content: Text(
+                '$direction'
+                    .replaceAll('TextDirection.', '')
+                    .replaceAll('rtl', 'Right to left')
+                    .replaceAll('ltr', 'Left to right'),
+              ),
+            ),
+          );
+        }).reversed,
+      ],
     );
   }
 
@@ -186,11 +231,20 @@ class Settings extends StatelessWidget {
         onPressed: () {
           appTheme.color = color;
         },
-        style: ButtonStyle(padding: ButtonState.all(EdgeInsets.zero)),
+        style: ButtonStyle(
+          padding: ButtonState.all(EdgeInsets.zero),
+          backgroundColor: ButtonState.resolveWith((states) {
+            if (states.isPressing) {
+              return color.light;
+            } else if (states.isHovering) {
+              return color.lighter;
+            }
+            return color;
+          }),
+        ),
         child: Container(
           height: 40,
           width: 40,
-          color: color,
           alignment: Alignment.center,
           child: appTheme.color == color
               ? Icon(

@@ -1,5 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:flutter/material.dart' show DefaultMaterialLocalizations;
+import 'package:flutter/material.dart' as m;
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 /// An application that uses fluent design.
 ///
@@ -58,7 +59,7 @@ class FluentApp extends StatefulWidget {
     this.localizationsDelegates,
     this.localeListResolutionCallback,
     this.localeResolutionCallback,
-    this.supportedLocales = const <Locale>[Locale('en', 'US')],
+    this.supportedLocales = defaultSupportedLocales,
     this.showPerformanceOverlay = false,
     this.checkerboardRasterCacheImages = false,
     this.checkerboardOffscreenLayers = false,
@@ -71,6 +72,7 @@ class FluentApp extends StatefulWidget {
     this.themeMode,
     this.restorationScopeId,
     this.scrollBehavior = const FluentScrollBehavior(),
+    this.useInheritedMediaQuery = false,
   })  : routeInformationProvider = null,
         routeInformationParser = null,
         routerDelegate = null,
@@ -95,7 +97,7 @@ class FluentApp extends StatefulWidget {
     this.localizationsDelegates,
     this.localeListResolutionCallback,
     this.localeResolutionCallback,
-    this.supportedLocales = const <Locale>[Locale('en', 'US')],
+    this.supportedLocales = defaultSupportedLocales,
     this.showPerformanceOverlay = false,
     this.checkerboardRasterCacheImages = false,
     this.checkerboardOffscreenLayers = false,
@@ -105,6 +107,7 @@ class FluentApp extends StatefulWidget {
     this.actions,
     this.restorationScopeId,
     this.scrollBehavior = const FluentScrollBehavior(),
+    this.useInheritedMediaQuery = false,
   })  : assert(routeInformationParser != null && routerDelegate != null,
             'The routeInformationParser and routerDelegate cannot be null.'),
         assert(supportedLocales.isNotEmpty),
@@ -280,7 +283,7 @@ class FluentApp extends StatefulWidget {
   /// Widget build(BuildContext context) {
   ///   return FluentApp(
   ///     shortcuts: <LogicalKeySet, Intent>{
-  ///       ... WidgetsApp.defaultShortcuts,
+  ///       ...WidgetsApp.defaultShortcuts,
   ///       LogicalKeySet(LogicalKeyboardKey.select): const ActivateIntent(),
   ///     },
   ///     color: const Color(0xFFFF0000),
@@ -344,6 +347,9 @@ class FluentApp extends StatefulWidget {
 
   static bool debugAllowBannerOverride = true;
 
+  /// {@macro flutter.widgets.widgetsApp.useInheritedMediaQuery}
+  final bool useInheritedMediaQuery;
+
   @override
   _FluentAppState createState() => _FluentAppState();
 }
@@ -367,8 +373,8 @@ class _FluentAppState extends State<FluentApp> {
       yield* widget.localizationsDelegates!;
     }
     yield DefaultFluentLocalizations.delegate;
-    yield DefaultMaterialLocalizations.delegate;
-    yield DefaultWidgetsLocalizations.delegate;
+    yield GlobalMaterialLocalizations.delegate;
+    yield GlobalWidgetsLocalizations.delegate;
   }
 
   bool get _usesRouter => widget.routerDelegate != null;
@@ -405,32 +411,45 @@ class _FluentAppState extends State<FluentApp> {
 
   Widget _builder(BuildContext context, Widget? child) {
     final themeData = theme(context);
-    return AnimatedFluentTheme(
-      curve: themeData.animationCurve,
-      data: themeData,
-      child: widget.builder != null
-          ? Builder(
-              builder: (BuildContext context) {
-                // Why are we surrounding a builder with a builder?
-                //
-                // The widget.builder may contain code that invokes
-                // Theme.of(), which should return the theme we selected
-                // above in AnimatedTheme. However, if we invoke
-                // widget.builder() directly as the child of AnimatedTheme
-                // then there is no Context separating them, and the
-                // widget.builder() will not find the theme. Therefore, we
-                // surround widget.builder with yet another builder so that
-                // a context separates them and Theme.of() correctly
-                // resolves to the theme we passed to AnimatedTheme.
-                return widget.builder!(context, child);
-              },
-            )
-          : child ?? const SizedBox.shrink(),
+    final mTheme = context.findAncestorWidgetOfExactType<m.Theme>();
+    return m.AnimatedTheme(
+      data: mTheme?.data ??
+          m.ThemeData(
+            brightness: themeData.brightness,
+            canvasColor: themeData.cardColor,
+            textSelectionTheme: TextSelectionThemeData(
+              selectionColor: themeData.accentColor
+                  .resolveFromBrightness(themeData.brightness)
+                  .withOpacity(0.8),
+              cursorColor: themeData.inactiveColor,
+            ),
+          ),
+      child: AnimatedFluentTheme(
+        curve: themeData.animationCurve,
+        data: themeData,
+        child: widget.builder != null
+            ? Builder(
+                builder: (BuildContext context) {
+                  // Why are we surrounding a builder with a builder?
+                  //
+                  // The widget.builder may contain code that invokes
+                  // Theme.of(), which should return the theme we selected
+                  // above in AnimatedTheme. However, if we invoke
+                  // widget.builder() directly as the child of AnimatedTheme
+                  // then there is no Context separating them, and the
+                  // widget.builder() will not find the theme. Therefore, we
+                  // surround widget.builder with yet another builder so that
+                  // a context separates them and Theme.of() correctly
+                  // resolves to the theme we passed to AnimatedTheme.
+                  return widget.builder!(context, child);
+                },
+              )
+            : child ?? const SizedBox.shrink(),
+      ),
     );
   }
 
   Widget _buildApp(BuildContext context) {
-    final theme = this.theme(context);
     final fluentColor = widget.color ?? Colors.blue;
     if (_usesRouter) {
       return WidgetsApp.router(
@@ -456,7 +475,7 @@ class _FluentAppState extends State<FluentApp> {
         actions: widget.actions,
         restorationScopeId: widget.restorationScopeId,
         localizationsDelegates: _localizationsDelegates,
-        textStyle: theme.typography.body,
+        useInheritedMediaQuery: widget.useInheritedMediaQuery,
       );
     }
 
@@ -487,10 +506,10 @@ class _FluentAppState extends State<FluentApp> {
       actions: widget.actions,
       restorationScopeId: widget.restorationScopeId,
       localizationsDelegates: _localizationsDelegates,
+      useInheritedMediaQuery: widget.useInheritedMediaQuery,
       pageRouteBuilder: <T>(RouteSettings settings, WidgetBuilder builder) {
         return FluentPageRoute<T>(settings: settings, builder: builder);
       },
-      textStyle: theme.typography.body,
     );
   }
 }
@@ -531,26 +550,6 @@ class FluentScrollBehavior extends ScrollBehavior {
           case TargetPlatform.iOS:
             return child;
         }
-    }
-  }
-
-  @override
-  Widget buildOverscrollIndicator(context, child, details) {
-    // When modifying this function, consider modifying the implementation in
-    // the base class as well.
-    switch (getPlatform(context)) {
-      case TargetPlatform.iOS:
-      case TargetPlatform.linux:
-      case TargetPlatform.macOS:
-      case TargetPlatform.windows:
-        return child;
-      case TargetPlatform.android:
-      case TargetPlatform.fuchsia:
-        return GlowingOverscrollIndicator(
-          child: child,
-          axisDirection: details.direction,
-          color: FluentTheme.of(context).accentColor,
-        );
     }
   }
 }
