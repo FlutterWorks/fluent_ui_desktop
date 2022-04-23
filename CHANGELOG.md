@@ -1,6 +1,6 @@
 Date format: DD/MM/YYYY
 
-## [next]
+## [3.11.0] - Menu Flyouts - [23/04/2022]
 
 - Implemented `MenuFlyout` ([#266](https://github.com/bdlukaa/fluent_ui/pull/266))
   - Implemented `FlyoutPosition`, which controls where the flyout will be opened according to the child. It can be `above`, `below` or `side`
@@ -9,6 +9,8 @@ Date format: DD/MM/YYYY
   - Implement `PopupContentSizeInfo`, which provides the information about the content size
   - Implemented `MenuFlyoutItem`, `MenuFlyoutSeparator` and `MenuFlyoutSubItem`. They are used inside `MenuFlyout` to render the menu items
   - `horizontalPositionDependentBox` is now globally available for use as a top function
+- Implemented overflow popup on `NavigationView` for top mode ([#https://github.com/bdlukaa/fluent_ui/pull/277])
+- `InfoBadge` now is correctly positioned on top mode ([#296](https://github.com/bdlukaa/fluent_ui/pull/296))
 
 ## [3.10.3] - [15/04/2022]
 
