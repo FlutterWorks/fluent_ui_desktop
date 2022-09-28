@@ -128,6 +128,8 @@ class FlyoutListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     assert(debugCheckHasFluentTheme(context));
+    final size = ContentSizeInfo.of(context).size;
+
     return HoverButton(
       key: key,
       onPressed: onPressed,
@@ -142,52 +144,75 @@ class FlyoutListTile extends StatelessWidget {
           states = {ButtonStates.hovering};
         }
 
-        Widget content = Container(
-          decoration: BoxDecoration(
-            color: ButtonThemeData.uncheckedInputColor(theme, states),
-            borderRadius: radius,
-          ),
-          padding: const EdgeInsetsDirectional.only(
-            top: 4.0,
-            bottom: 4.0,
-            start: 10.0,
-            end: 8.0,
-          ),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            if (icon != null)
-              Padding(
-                padding: const EdgeInsetsDirectional.only(end: 10.0),
-                child: IconTheme.merge(
-                  data: const IconThemeData(size: 16.0),
-                  child: icon!,
-                ),
+        Widget content = Stack(children: [
+          Container(
+            decoration: BoxDecoration(
+              color: ButtonThemeData.uncheckedInputColor(
+                theme,
+                states,
+                transparentWhenNone: true,
               ),
-            Flexible(
-              child: Padding(
-                padding: const EdgeInsetsDirectional.only(end: 10.0),
-                child: DefaultTextStyle(
-                  child: text,
-                  style: TextStyle(
-                    inherit: false,
-                    fontSize: 14.0,
-                    letterSpacing: -0.15,
-                    color: theme.inactiveColor,
+              borderRadius: radius,
+            ),
+            padding: const EdgeInsetsDirectional.only(
+              top: 4.0,
+              bottom: 4.0,
+              start: 10.0,
+              end: 8.0,
+            ),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              if (icon != null)
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(end: 10.0),
+                  child: IconTheme.merge(
+                    data: const IconThemeData(size: 16.0),
+                    child: icon!,
+                  ),
+                ),
+              Flexible(
+                fit: size.isEmpty ? FlexFit.loose : FlexFit.tight,
+                child: Padding(
+                  padding: const EdgeInsetsDirectional.only(end: 10.0),
+                  child: DefaultTextStyle(
+                    style: TextStyle(
+                      inherit: false,
+                      fontSize: 14.0,
+                      letterSpacing: -0.15,
+                      color: theme.inactiveColor,
+                    ),
+                    child: text,
                   ),
                 ),
               ),
-            ),
-            if (trailing != null)
-              DefaultTextStyle(
-                child: trailing!,
-                style: TextStyle(
-                  inherit: false,
-                  fontSize: 12.0,
-                  color: theme.borderInputColor,
-                  height: 0.7,
+              if (trailing != null)
+                DefaultTextStyle(
+                  style: TextStyle(
+                    inherit: false,
+                    fontSize: 12.0,
+                    color: theme.borderInputColor,
+                    height: 0.7,
+                  ),
+                  child: trailing!,
                 ),
+            ]),
+          ),
+          if (selected)
+            Positioned(
+              top: 0,
+              bottom: 0,
+              child: Container(
+                margin: const EdgeInsets.symmetric(vertical: 6.0),
+                width: 2.5,
+                decoration: BoxDecoration(
+                  color: theme.accentColor.resolveFromReverseBrightness(
+                    theme.brightness,
+                  ),
+                  borderRadius: BorderRadius.circular(100),
+                ),
+                child: trailing!,
               ),
-          ]),
-        );
+            ),
+        ]);
 
         if (tooltip != null) {
           content = Tooltip(message: tooltip, child: content);

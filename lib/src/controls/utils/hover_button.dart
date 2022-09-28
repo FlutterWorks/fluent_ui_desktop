@@ -45,6 +45,8 @@ class HoverButton extends StatefulWidget {
     this.onFocusChange,
     this.autofocus = false,
     this.actionsEnabled = true,
+    this.customActions,
+    this.shortcuts,
     this.focusEnabled = true,
   }) : super(key: key);
 
@@ -96,12 +98,28 @@ class HoverButton extends StatefulWidget {
 
   final ValueChanged<bool>? onFocusChange;
 
-  /// Whether actions and shortcuts are enabled
+  /// Whether actions are enabled
+  ///
+  /// Default actions:
+  ///  * Execute [onPressed] with Enter
+  ///
+  /// See also:
+  ///  * [customActions], which lets you execute custom actions
   final bool actionsEnabled;
 
-  /// Whether the focus is enabled.
+  /// Custom actions that will be executed around the subtree of this widget.
   ///
-  /// If disabled, actions and shortcurts will not work, regardless of what is
+  /// See also:
+  ///
+  ///  * [actionsEnabled], which controls if actions are enabled or not
+  final Map<Type, Action<Intent>>? customActions;
+
+  /// {@macro flutter.widgets.shortcuts.shortcuts}
+  final Map<ShortcutActivator, Intent>? shortcuts;
+
+  /// Whether the focusing is enabled.
+  ///
+  /// If false, actions and shortcurts will not work, regardless of what is
   /// set on [actionsEnabled].
   final bool focusEnabled;
 
@@ -113,12 +131,13 @@ class _HoverButtonState extends State<HoverButton> {
   late FocusNode node;
 
   late Map<Type, Action<Intent>> _actionMap;
+  late Map<Type, Action<Intent>> defaultActions;
 
   @override
   void initState() {
     super.initState();
     node = widget.focusNode ?? _createFocusNode();
-    void _handleActionTap() async {
+    void handleActionTap() async {
       if (!enabled) return;
       setState(() => _pressing = true);
       widget.onPressed?.call();
@@ -126,13 +145,18 @@ class _HoverButtonState extends State<HoverButton> {
       if (mounted) setState(() => _pressing = false);
     }
 
-    _actionMap = <Type, Action<Intent>>{
+    defaultActions = {
       ActivateIntent: CallbackAction<ActivateIntent>(
-        onInvoke: (ActivateIntent intent) => _handleActionTap(),
+        onInvoke: (ActivateIntent intent) => handleActionTap(),
       ),
       ButtonActivateIntent: CallbackAction<ButtonActivateIntent>(
-        onInvoke: (ButtonActivateIntent intent) => _handleActionTap(),
+        onInvoke: (ButtonActivateIntent intent) => handleActionTap(),
       ),
+    };
+
+    _actionMap = <Type, Action<Intent>>{
+      ...defaultActions,
+      if (widget.customActions != null) ...widget.customActions!,
     };
   }
 
@@ -141,6 +165,13 @@ class _HoverButtonState extends State<HoverButton> {
     super.didUpdateWidget(oldWidget);
     if (widget.focusNode != oldWidget.focusNode) {
       node = widget.focusNode ?? node;
+    }
+
+    if (widget.customActions != oldWidget.customActions) {
+      _actionMap = <Type, Action<Intent>>{
+        ...defaultActions,
+        if (widget.customActions != null) ...widget.customActions!,
+      };
     }
   }
 
@@ -219,6 +250,7 @@ class _HoverButtonState extends State<HoverButton> {
         focusNode: node,
         autofocus: widget.autofocus,
         enabled: enabled,
+        shortcuts: widget.shortcuts,
         actions: widget.actionsEnabled ? _actionMap : {},
         onFocusChange: widget.onFocusChange,
         onShowFocusHighlight: (v) {
@@ -231,6 +263,8 @@ class _HoverButtonState extends State<HoverButton> {
       );
     } else {
       w = MouseRegion(
+        cursor: widget.cursor ?? MouseCursor.defer,
+        opaque: true,
         onEnter: (e) {
           if (mounted) setState(() => _hovering = true);
         },
