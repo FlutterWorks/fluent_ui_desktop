@@ -504,7 +504,7 @@ class PaneItemAction extends PaneItem {
     return super.build(
       context,
       selected,
-      onTap,
+      onPressed,
       displayMode: displayMode,
       showTextOnTop: showTextOnTop,
       autofocus: autofocus,
@@ -614,19 +614,20 @@ class __PaneItemExpanderState extends State<_PaneItemExpander>
   }
 
   late bool _open;
-  late AnimationController controller = AnimationController(
+  late final AnimationController controller = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 100),
   );
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     _open = PageStorage.of(context)?.readState(
           context,
-          identifier: 'paneItemExpanderOpen',
+          identifier: 'paneItemExpanderOpen$index',
         ) as bool? ??
         false;
+
     if (_open) {
       controller.value = 1;
     }
@@ -639,13 +640,19 @@ class __PaneItemExpanderState extends State<_PaneItemExpander>
     super.dispose();
   }
 
+  int get index {
+    final body = InheritedNavigationView.of(context);
+
+    return body.pane?.effectiveIndexOf(widget.item) ?? 0;
+  }
+
   void toggleOpen() {
     setState(() => _open = !_open);
 
     PageStorage.of(context)?.writeState(
       context,
       _open,
-      identifier: 'paneItemExpanderOpen',
+      identifier: 'paneItemExpanderOpen$index',
     );
     if (useFlyout) {
       flyoutController.toggle();
@@ -662,10 +669,11 @@ class __PaneItemExpanderState extends State<_PaneItemExpander>
     assert(debugCheckHasFluentTheme(context));
     final theme = FluentTheme.of(context);
     final body = InheritedNavigationView.of(context);
+    final navigationTheme = NavigationPaneTheme.of(context);
 
     _open = PageStorage.of(context)?.readState(
           context,
-          identifier: 'paneItemExpanderOpen',
+          identifier: 'paneItemExpanderOpen$index',
         ) as bool? ??
         _open;
 
@@ -729,6 +737,7 @@ class __PaneItemExpanderState extends State<_PaneItemExpander>
                 ? const SizedBox(width: double.infinity)
                 : Column(
                     mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: widget.items.map((item) {
                       if (item is PaneItem) {
                         final i = item.copyWith(
@@ -746,7 +755,10 @@ class __PaneItemExpanderState extends State<_PaneItemExpander>
                           itemIndex: body.pane!.effectiveIndexOf(item),
                         );
                       } else if (item is PaneItemHeader) {
-                        return item.build(context);
+                        return Padding(
+                          padding: _PaneItemExpander.leadingPadding,
+                          child: item.build(context),
+                        );
                       } else if (item is PaneItemSeparator) {
                         return item.build(
                           context,
@@ -788,6 +800,27 @@ class __PaneItemExpanderState extends State<_PaneItemExpander>
                   );
                 } else if (item is PaneItemSeparator) {
                   return const MenuFlyoutSeparator();
+                } else if (item is PaneItemHeader) {
+                  return MenuFlyoutItemBuilder(builder: (context) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10.0,
+                        vertical: 8.0,
+                      ),
+                      margin: const EdgeInsets.only(bottom: 4.0),
+                      child: DefaultTextStyle(
+                        style: navigationTheme.itemHeaderTextStyle ??
+                            const TextStyle(),
+                        softWrap: false,
+                        maxLines: 1,
+                        overflow: TextOverflow.fade,
+                        // textAlign: view.displayMode == PaneDisplayMode.top
+                        //     ? TextAlign.center
+                        //     : TextAlign.left,
+                        child: item.header,
+                      ),
+                    );
+                  });
                 } else {
                   throw UnsupportedError(
                     '${item.runtimeType} is not a supported item type',
@@ -827,8 +860,10 @@ class _PaneItemExpanderMenuItem extends MenuFlyoutItemInterface {
         onPressed: onPressed,
         builder: (context, states) {
           return Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10.0,
+              vertical: 8.0,
+            ),
             margin: const EdgeInsets.only(bottom: 4.0),
             decoration: BoxDecoration(
               color: ButtonThemeData.uncheckedInputColor(

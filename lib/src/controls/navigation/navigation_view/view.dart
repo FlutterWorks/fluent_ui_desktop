@@ -43,6 +43,7 @@ class NavigationView extends StatefulWidget {
     this.contentShape,
     this.onOpenSearch,
     this.transitionBuilder,
+    this.paneBodyBuilder,
   })  : assert(
           (pane != null && content == null) ||
               (pane == null && content != null),
@@ -52,6 +53,17 @@ class NavigationView extends StatefulWidget {
 
   /// The app bar of the app.
   final NavigationAppBar? appBar;
+
+  /// Can be used to override the widget that is built from
+  /// the [PaneItem.body]. Only used if [pane] is provided.
+  /// If nothing is selected, `selectedPaneItemBody` will be
+  /// null.
+  ///
+  /// This can be useful if you are using router-based navigation,
+  /// and the body of the navigation pane is dynamically determined or
+  /// affected by the current route rather than just by the currently
+  /// selected pane.
+  final Widget Function(Widget? selectedPaneItemBody)? paneBodyBuilder;
 
   /// The navigation pane, that can be displayed either on the
   /// left, on the top, or above the body.
@@ -139,6 +151,19 @@ class NavigationViewState extends State<NavigationView> {
   final Map<int, GlobalKey> _itemKeys = {};
 
   bool _minimalPaneOpen = false;
+
+  /// Whether the minimal pane is open
+  ///
+  /// Always false if the current display mode is not minimal.
+  bool get minimalPaneOpen => _minimalPaneOpen;
+  set minimalPaneOpen(bool open) {
+    if (displayMode == PaneDisplayMode.minimal) {
+      setState(() => _minimalPaneOpen = open);
+    } else {
+      setState(() => _minimalPaneOpen = false);
+    }
+  }
+
   late bool _compactOverlayOpen;
 
   int _oldIndex = 0;
@@ -261,6 +286,26 @@ class NavigationViewState extends State<NavigationView> {
       return theme.backgroundColor;
     }
 
+    Widget? paneNavigationButton() {
+      final minimalLeading = PaneItem(
+        title: Text(
+          !minimalPaneOpen
+              ? localizations.openNavigationTooltip
+              : localizations.closeNavigationTooltip,
+        ),
+        icon: const Icon(FluentIcons.global_nav_button),
+        body: const SizedBox.shrink(),
+      ).build(
+        context,
+        false,
+        () async {
+          minimalPaneOpen = !minimalPaneOpen;
+        },
+        displayMode: PaneDisplayMode.compact,
+      );
+      return minimalLeading;
+    }
+
     return LayoutBuilder(builder: (context, consts) {
       var displayMode = widget.pane?.displayMode ?? PaneDisplayMode.auto;
 
@@ -290,31 +335,19 @@ class NavigationViewState extends State<NavigationView> {
 
         displayMode = _autoDisplayMode!;
       }
-
       assert(displayMode != PaneDisplayMode.auto);
 
       Widget appBar = () {
         if (widget.appBar != null) {
-          final minimalLeading = PaneItem(
-            title: Text(
-              !_minimalPaneOpen
-                  ? localizations.openNavigationTooltip
-                  : localizations.closeNavigationTooltip,
-            ),
-            icon: const Icon(FluentIcons.global_nav_button),
-            body: const SizedBox.shrink(),
-          ).build(
-            context,
-            false,
-            () async {
-              setState(() => _minimalPaneOpen = !_minimalPaneOpen);
-            },
-            displayMode: PaneDisplayMode.compact,
-          );
           return _NavigationAppBar(
             appBar: widget.appBar!,
-            additionalLeading:
-                displayMode == PaneDisplayMode.minimal ? minimalLeading : null,
+            additionalLeading: () {
+              if (widget.pane != null) {
+                return displayMode == PaneDisplayMode.minimal
+                    ? paneNavigationButton()
+                    : null;
+              }
+            }(),
           );
         }
         return LayoutBuilder(
@@ -328,12 +361,16 @@ class NavigationViewState extends State<NavigationView> {
       late Widget paneResult;
       if (widget.pane != null) {
         final pane = widget.pane!;
+        final paneBodyBuilder = widget.paneBodyBuilder;
         final body = _NavigationBody(
           itemKey: ValueKey(pane.selected ?? -1),
           transitionBuilder: widget.transitionBuilder,
-          child: pane.selected != null
-              ? pane.selectedItem.body
-              : const SizedBox.shrink(),
+          child: paneBodyBuilder != null
+              ? paneBodyBuilder(
+                  pane.selected != null ? pane.selectedItem.body : null)
+              : (pane.selected != null
+                  ? pane.selectedItem.body
+                  : const SizedBox.shrink()),
         );
         if (pane.customPane != null) {
           paneResult = Builder(builder: (context) {
@@ -414,6 +451,7 @@ class NavigationViewState extends State<NavigationView> {
               double openSize =
                   pane.size?.openPaneWidth ?? kOpenNavigationPaneWidth;
 
+              final bool noOverlayRequired = consts.maxWidth / 2.5 > openSize;
               final bool openedWithoutOverlay =
                   _compactOverlayOpen && consts.maxWidth / 2.5 > openSize;
 
@@ -423,7 +461,7 @@ class NavigationViewState extends State<NavigationView> {
               //   identifier: 'compactOverlayOpen',
               // )}');
 
-              if (openedWithoutOverlay || !_compactOverlayOpen) {
+              if (noOverlayRequired) {
                 paneResult = Column(children: [
                   appBar,
                   Expanded(
@@ -469,7 +507,7 @@ class NavigationViewState extends State<NavigationView> {
                 paneResult = Stack(children: [
                   Padding(
                     padding: EdgeInsetsDirectional.only(
-                      top: widget.appBar?.finalHeight(context) ?? 0.0,
+                      top: appBarPadding.resolve(direction).top,
                       start: pane.size?.compactWidth ??
                           kCompactNavigationPaneWidth,
                     ),
@@ -490,30 +528,55 @@ class NavigationViewState extends State<NavigationView> {
                       ),
                     ),
                   PaneScrollConfiguration(
-                    child: Mica(
-                      key: _overlayKey,
-                      backgroundColor: overlayBackgroundColor(),
-                      elevation: 10.0,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: const Color(0xFF6c6c6c),
-                            width: 0.15,
+                    child: () {
+                      if (_compactOverlayOpen) {
+                        return ClipRect(
+                          child: Mica(
+                            key: _overlayKey,
+                            backgroundColor: overlayBackgroundColor(),
+                            elevation: 10.0,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: const Color(0xFF6c6c6c),
+                                  width: 0.15,
+                                ),
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              margin: const EdgeInsets.symmetric(
+                                vertical: 1.0,
+                              ),
+                              padding: appBarPadding,
+                              child: _OpenNavigationPane(
+                                theme: theme,
+                                pane: pane,
+                                paneKey: _panelKey,
+                                listKey: _listKey,
+                                onToggle: toggleCompactOpenMode,
+                                onItemSelected: toggleCompactOpenMode,
+                              ),
+                            ),
                           ),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        margin: const EdgeInsets.symmetric(vertical: 1.0),
-                        padding: appBarPadding,
-                        child: _OpenNavigationPane(
-                          theme: theme,
-                          pane: pane,
-                          paneKey: _panelKey,
-                          listKey: _listKey,
-                          onToggle: toggleCompactOpenMode,
-                          onItemSelected: toggleCompactOpenMode,
-                        ),
-                      ),
-                    ),
+                        );
+                      } else {
+                        return Mica(
+                          key: _overlayKey,
+                          backgroundColor: overlayBackgroundColor(),
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                              top: appBarPadding.resolve(direction).top,
+                            ),
+                            child: _CompactNavigationPane(
+                              pane: pane,
+                              paneKey: _panelKey,
+                              listKey: _listKey,
+                              onToggle: toggleCompactOpenMode,
+                              onOpenSearch: widget.onOpenSearch,
+                            ),
+                          ),
+                        );
+                      }
+                    }(),
                   ),
                   appBar,
                 ]);
@@ -551,12 +614,10 @@ class NavigationViewState extends State<NavigationView> {
                   bottom: 0.0,
                   child: content,
                 ),
-                if (_minimalPaneOpen)
+                if (minimalPaneOpen)
                   Positioned.fill(
                     child: GestureDetector(
-                      onTap: () {
-                        setState(() => _minimalPaneOpen = false);
-                      },
+                      onTap: () => minimalPaneOpen = false,
                       child: AbsorbPointer(
                         child: Semantics(
                           label: localizations.modalBarrierDismissLabel,
@@ -569,7 +630,7 @@ class NavigationViewState extends State<NavigationView> {
                   key: _overlayKey,
                   duration: theme.animationDuration ?? Duration.zero,
                   curve: theme.animationCurve ?? Curves.linear,
-                  start: _minimalPaneOpen ? 0.0 : -kOpenNavigationPaneWidth,
+                  start: minimalPaneOpen ? 0.0 : -kOpenNavigationPaneWidth,
                   width: kOpenNavigationPaneWidth,
                   height: mediaQuery.size.height,
                   child: PaneScrollConfiguration(
@@ -577,7 +638,7 @@ class NavigationViewState extends State<NavigationView> {
                       color: Colors.black,
                       child: Mica(
                         backgroundColor: overlayBackgroundColor(),
-                        elevation: 10.0,
+                        elevation: 0.0,
                         child: Container(
                           decoration: BoxDecoration(
                             border: Border.all(
@@ -593,9 +654,7 @@ class NavigationViewState extends State<NavigationView> {
                             pane: pane,
                             paneKey: _panelKey,
                             listKey: _listKey,
-                            onItemSelected: () {
-                              setState(() => _minimalPaneOpen = false);
-                            },
+                            onItemSelected: () => minimalPaneOpen = false,
                           ),
                         ),
                       ),
@@ -621,7 +680,7 @@ class NavigationViewState extends State<NavigationView> {
         backgroundColor: theme.backgroundColor,
         child: InheritedNavigationView(
           displayMode: _compactOverlayOpen ? PaneDisplayMode.open : displayMode,
-          minimalPaneOpen: _minimalPaneOpen,
+          minimalPaneOpen: minimalPaneOpen,
           pane: widget.pane,
           oldIndex: _oldIndex,
           child: PaneItemKeys(keys: _itemKeys, child: paneResult),
@@ -875,7 +934,7 @@ class NavigationViewScrollBehavior extends FluentScrollBehavior {
   @override
   Widget buildScrollbar(context, child, details) {
     return Scrollbar(
-      controller: PrimaryScrollController.of(context),
+      controller: details.controller,
       thumbVisibility: false,
       interactive: true,
       child: child,
