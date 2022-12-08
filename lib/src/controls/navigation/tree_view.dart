@@ -268,15 +268,25 @@ class TreeViewItem with Diagnosticable {
         (p) => p?.updateSelected(deselectParentWhenChildrenDeselected));
   }
 
-  /// Updates [selected] based on the [children]s' state. [selected] will not
-  /// be forced to false if `deselectParentWhenChildrenDeselected` is false and
+  /// Updates [selected] based on the direct [children]s' state.
+  /// [selected] will not be forced to false if
+  /// `deselectParentWhenChildrenDeselected` is false and
   /// either there are no children or all children are deselected.
+  ///
+  /// Since this only updates the state based on direct children,
+  /// you would normally only call this in a depth-first manner on
+  /// all parents, for example:
+  ///
+  /// ```dart
+  /// item.executeForAllParents((parent) => parent
+  ///   ?.updateSelected(widget.deselectParentWhenChildrenDeselected))
+  /// ```
   void updateSelected(bool deselectParentWhenChildrenDeselected) {
     bool hasNull = false;
     bool hasFalse = false;
     bool hasTrue = false;
 
-    for (final child in children.build(assignInternalProperties: false)) {
+    for (final child in children) {
       if (child.selected == null) {
         hasNull = true;
       } else if (child.selected == false) {
@@ -372,35 +382,26 @@ class TreeViewItem with Diagnosticable {
 extension TreeViewItemCollection on List<TreeViewItem> {
   /// Adds the [TreeViewItem.parent] property to the [TreeViewItem]s
   /// and calculates other internal properties.
-  List<TreeViewItem> build({
-    TreeViewItem? parent,
-    bool assignInternalProperties = true,
-  }) {
+  List<TreeViewItem> build({TreeViewItem? parent}) {
     if (isNotEmpty) {
       final List<TreeViewItem> list = [];
-      final anyExpandableSiblings =
-          assignInternalProperties ? any((i) => i.isExpandable) : null;
+      final anyExpandableSiblings = any((i) => i.isExpandable);
       for (final item in [...this]) {
-        if (assignInternalProperties) {
-          item._parent = parent;
-          item._anyExpandableSiblings = anyExpandableSiblings!;
-        }
+        item._parent = parent;
+        item._anyExpandableSiblings = anyExpandableSiblings;
         if (parent != null) {
           item._visible = parent._visible;
         }
         if (item._visible) {
           list.add(item);
         }
-        final itemAnyExpandableSiblings = assignInternalProperties
-            ? item.children.any((i) => i.isExpandable)
-            : null;
+        final itemAnyExpandableSiblings =
+            item.children.any((i) => i.isExpandable);
         for (final child in item.children) {
           // only add the children when it's expanded and visible
           child._visible = item.expanded && item._visible;
-          if (assignInternalProperties) {
-            child._parent = item;
-            child._anyExpandableSiblings = itemAnyExpandableSiblings!;
-          }
+          child._parent = item;
+          child._anyExpandableSiblings = itemAnyExpandableSiblings;
           if (child._visible) {
             list.add(child);
           }
@@ -612,7 +613,7 @@ class TreeView extends StatefulWidget {
   final bool narrowSpacing;
 
   @override
-  State<TreeView> createState() => _TreeViewState();
+  State<TreeView> createState() => TreeViewState();
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
@@ -624,15 +625,14 @@ class TreeView extends StatefulWidget {
   }
 }
 
-class _TreeViewState extends State<TreeView>
-    with AutomaticKeepAliveClientMixin {
-  late List<TreeViewItem> items;
+class TreeViewState extends State<TreeView> with AutomaticKeepAliveClientMixin {
+  late List<TreeViewItem> _items;
 
   /// Builds all the items based on the items provided by the [widget]
-  void buildItems() {
+  void _buildItems() {
     if (widget.selectionMode != TreeViewSelectionMode.single) {
-      items = widget.items.build();
-      items.executeForAll(
+      _items = widget.items.build();
+      widget.items.executeForAll(
         (item) => item.executeForAllParents((parent) => parent
             ?.updateSelected(widget.deselectParentWhenChildrenDeselected)),
       );
@@ -651,25 +651,25 @@ class _TreeViewState extends State<TreeView>
           }
         }
       }
-      items = widget.items.build();
+      _items = widget.items.build();
     }
   }
 
   @override
   void initState() {
     super.initState();
-    buildItems();
+    _buildItems();
   }
 
   @override
   void didUpdateWidget(TreeView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.items != oldWidget.items) buildItems();
+    if (widget.items != oldWidget.items) _buildItems();
   }
 
   @override
   void dispose() {
-    items.clear();
+    _items.clear();
     super.dispose();
   }
 
@@ -678,6 +678,7 @@ class _TreeViewState extends State<TreeView>
     super.build(context);
     assert(debugCheckHasDirectionality(context));
     assert(debugCheckHasFluentTheme(context));
+
     return FocusTraversalGroup(
       policy: WidgetOrderTraversalPolicy(),
       child: ConstrainedBox(
@@ -693,9 +694,9 @@ class _TreeViewState extends State<TreeView>
           cacheExtent: widget.cacheExtent,
           itemExtent: widget.itemExtent,
           addRepaintBoundaries: widget.addRepaintBoundaries,
-          prototypeItem: widget.usePrototypeItem && items.isNotEmpty
+          prototypeItem: widget.usePrototypeItem && _items.isNotEmpty
               ? _TreeViewItem(
-                  item: items.first,
+                  item: _items.first,
                   selectionMode: widget.selectionMode,
                   narrowSpacing: widget.narrowSpacing,
                   onInvoked: (_) {},
@@ -705,9 +706,9 @@ class _TreeViewState extends State<TreeView>
                   loadingWidgetFallback: widget.loadingWidget,
                 )
               : null,
-          itemCount: items.length,
+          itemCount: _items.length,
           itemBuilder: (context, index) {
-            final item = items[index];
+            final item = _items[index];
 
             return _TreeViewItem(
               key: item.key ?? ValueKey<TreeViewItem>(item),
@@ -722,7 +723,7 @@ class _TreeViewState extends State<TreeView>
                 switch (widget.selectionMode) {
                   case TreeViewSelectionMode.single:
                     setState(() {
-                      items.executeForAll((item) {
+                      _items.executeForAll((item) {
                         item.selected = false;
                       });
                       item.selected = true;
@@ -750,7 +751,7 @@ class _TreeViewState extends State<TreeView>
                 }
               },
               onExpandToggle: () async {
-                await invokeItem(item, TreeViewItemInvokeReason.expandToggle);
+                await _invokeItem(item, TreeViewItemInvokeReason.expandToggle);
                 if (item.collapsable) {
                   if (item.lazy) {
                     // Triggers a loading indicator.
@@ -771,11 +772,11 @@ class _TreeViewState extends State<TreeView>
                   setState(() {
                     item.loading = false;
                     item.expanded = !item.expanded;
-                    items = widget.items.build();
+                    _buildItems();
                   });
                 }
               },
-              onInvoked: (reason) => invokeItem(item, reason),
+              onInvoked: (reason) => _invokeItem(item, reason),
               loadingWidgetFallback: widget.loadingWidget,
             );
           },
@@ -784,12 +785,22 @@ class _TreeViewState extends State<TreeView>
     );
   }
 
-  Future<void> invokeItem(
-      TreeViewItem item, TreeViewItemInvokeReason reason) async {
-    await Future.wait([
+  Future<void> _invokeItem(
+    TreeViewItem item,
+    TreeViewItemInvokeReason reason,
+  ) {
+    return Future.wait([
       if (widget.onItemInvoked != null) widget.onItemInvoked!(item, reason),
       if (item.onInvoked != null) item.onInvoked!(item, reason),
     ]);
+  }
+
+  /// Toggles the [item] expanded state
+  void toggleItem(TreeViewItem item) {
+    setState(() {
+      item.expanded = !item.expanded;
+      _buildItems();
+    });
   }
 
   @override
@@ -832,14 +843,18 @@ class _TreeViewItem extends StatelessWidget {
                 const SingleActivator(LogicalKeyboardKey.arrowLeft):
                     VoidCallbackIntent(() {
                   if (item.expanded) {
-                    // if the item is already expanded, close it
+                    // if the item is expanded, close it
                     onExpandToggle();
+                  } else if (item.parent != null) {
+                    // if the item is already closed and has a parent
+                    // focus the parent
+                    item.parent!.focusNode.requestFocus();
                   }
                 }),
                 const SingleActivator(LogicalKeyboardKey.arrowRight):
                     VoidCallbackIntent(() {
                   if (item.expanded) {
-                    // if the item is already expanded, move to its first child
+                    // if the item is already expanded, focus its first child
                     FocusScope.of(context).nextFocus();
                   } else {
                     // expand the item

@@ -88,6 +88,7 @@ class NavigationPane with Diagnosticable {
     this.customPane,
     this.menuButton,
     this.scrollController,
+    this.scrollBehavior,
     this.leading,
     this.indicator = const StickyNavigationIndicator(),
   }) : assert(
@@ -172,13 +173,18 @@ class NavigationPane with Diagnosticable {
   /// Called when the current index changes.
   final ValueChanged<int>? onChanged;
 
-  /// The scroll controller used by the pane when [displayMode]
-  /// is [PaneDisplayMode.compact] and [PaneDisplayMode.open].
+  /// The scroll controller used by the pane when [displayMode] is
+  /// [PaneDisplayMode.compact] and [PaneDisplayMode.open].
   ///
-  /// If null, a local scroll controller is created to control
-  /// the scrolling and keep the state of the scroll when the
-  /// display mode is toggled.
+  /// If null, a local scroll controller is created to control the scrolling and
+  /// keep the state of the scroll when the display mode is toggled.
   final ScrollController? scrollController;
+
+  /// The scroll behavior used by the pane when [displayMode] is
+  /// [PaneDisplayMode.compact] and [PaneDisplayMode.open].
+  ///
+  /// If null, [NavigationViewScrollBehavior] is used.
+  final ScrollBehavior? scrollBehavior;
 
   /// The leading Widget for the Pane
   final Widget? leading;
@@ -1272,6 +1278,7 @@ class _OpenNavigationPaneState extends State<_OpenNavigationPane>
                 shrinkWrap: true,
                 key: widget.listKey,
                 primary: true,
+                addAutomaticKeepAlives: true,
                 children: widget.pane.items.map((item) {
                   return _OpenNavigationPane.buildItem(
                     context,

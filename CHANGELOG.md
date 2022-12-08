@@ -1,4 +1,31 @@
-## [4.0.3]
+## 4.1.1
+
+- Ensure acrylic is updated only if it's mounted ([#634](https://github.com/bdlukaa/fluent_ui/issues/634))
+- Ensure the provided `startYear` and `endYear` in `DateTime` are used properly ([#627](https://github.com/bdlukaa/fluent_ui/issues/627))
+- Fix left arrow key not moving to parent item on collapsed `TreeViewItem` ([#632](https://github.com/bdlukaa/fluent_ui/issues/632)) 
+- Added `NavigationPane.scrollBehavior` ([#640](https://github.com/bdlukaa/fluent_ui/issues/640))
+- Added `CommandBarCard.borderRadius` ([#641](https://github.com/bdlukaa/fluent_ui/issues/641))
+- Ensure combobox scroll controller has a client attached before using it ([#620](https://github.com/bdlukaa/fluent_ui/issues/620))
+- Correctly use `TextFormBox.initialValue`
+- Added `TreeViewState.toggleItem`, which toggles the item expanded state ([#493](https://github.com/bdlukaa/fluent_ui/issues/493))
+- Ensure `NavigationView` pane items are brought into view when selected
+
+## 4.1.0
+
+- Fixed `TreeView` selection state behavior for items that are not expanded ([#578](https://github.com/bdlukaa/fluent_ui/issues/578))
+- Added support for Romanian language ([#602](https://github.com/bdlukaa/fluent_ui/pull/602))
+- Ensure the body state in `NavigationView` is properly preserved ([#607](https://github.com/bdlukaa/fluent_ui/pull/607))
+- **BREAKING** Renamed `ExpanderState.open` to `ExpanderState.isExpanded`
+- The same identifier is no longer used for every `Expander` ([#596](https://github.com/bdlukaa/fluent_ui/issues/596))
+- Ensure the TabView scroll controller has clients before using it ([#615](https://github.com/bdlukaa/fluent_ui/issues/615))
+- TabView now waits a time to resize after closed ([#617](https://github.com/bdlukaa/fluent_ui/issues/617))
+- `ToggleButton` border width is uniform ([#610](https://github.com/bdlukaa/fluent_ui/issues/610))
+
+## 4.0.3+1
+
+- Update documentation
+
+## 4.0.3
 
 - `NavigationView` scrollbar can now be dragged ([#472](https://github.com/bdlukaa/fluent_ui/issues/472))
 - `PaneItemHeader` can now be used inside a `PaneItemExpander` ([#575](https://github.com/bdlukaa/fluent_ui/issues/575))
