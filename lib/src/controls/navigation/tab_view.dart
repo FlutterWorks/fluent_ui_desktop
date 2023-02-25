@@ -226,8 +226,9 @@ class _TabViewState extends State<TabView> {
           itemCount: widget.tabs.length,
           animationDuration: const Duration(milliseconds: 100),
         );
-    scrollController.itemCount = widget.tabs.length;
-    scrollController.addListener(_handleScrollUpdate);
+    scrollController
+      ..itemCount = widget.tabs.length
+      ..addListener(_handleScrollUpdate);
   }
 
   void _handleScrollUpdate() {
@@ -242,7 +243,7 @@ class _TabViewState extends State<TabView> {
     }
     if (widget.currentIndex != oldWidget.currentIndex &&
         scrollController.hasClients) {
-      scrollController.scrollToItem(widget.currentIndex, center: false);
+      scrollController.scrollToItem(widget.currentIndex);
     }
   }
 
@@ -275,7 +276,7 @@ class _TabViewState extends State<TabView> {
 
       closeTimer?.cancel();
 
-      double tabWidth = preferredTabWidth;
+      var tabWidth = preferredTabWidth;
 
       final tabBox =
           tab._tabKey.currentContext?.findRenderObject() as RenderBox?;
@@ -298,7 +299,7 @@ class _TabViewState extends State<TabView> {
     int index,
     double preferredTabWidth,
   ) {
-    final Tab tab = widget.tabs[index];
+    final tab = widget.tabs[index];
     final tabWidget = _Tab(
       tab,
       key: ValueKey<int>(index),
@@ -410,20 +411,20 @@ class _TabViewState extends State<TabView> {
     final localizations = FluentLocalizations.of(context);
 
     final headerFooterTextStyle =
-        (theme.typography.bodyLarge ?? const TextStyle());
+        theme.typography.bodyLarge ?? const TextStyle();
 
     Widget tabBar = Column(children: [
       ScrollConfiguration(
         behavior: const _TabViewScrollBehavior(),
         child: Container(
-          margin: const EdgeInsets.only(top: 4.5),
-          padding: const EdgeInsets.only(left: 8),
+          margin: const EdgeInsetsDirectional.only(top: 4.5),
+          padding: const EdgeInsetsDirectional.only(start: 8),
           height: _kTileHeight,
           width: double.infinity,
           child: Row(children: [
             if (widget.header != null)
               Padding(
-                padding: const EdgeInsets.only(right: 12.0),
+                padding: const EdgeInsetsDirectional.only(end: 12.0),
                 child: DefaultTextStyle(
                   style: headerFooterTextStyle,
                   child: widget.header!,
@@ -486,10 +487,10 @@ class _TabViewState extends State<TabView> {
                 );
 
                 /// Whether the tab bar is scrollable
-                bool scrollable = preferredTabWidth * widget.tabs.length >
+                var scrollable = preferredTabWidth * widget.tabs.length >
                     width - (widget.showNewButton ? _kButtonWidth : 0);
 
-                final bool showScrollButtons = widget.showScrollButtons &&
+                final showScrollButtons = widget.showScrollButtons &&
                     scrollable &&
                     scrollController.hasClients;
 
@@ -572,7 +573,7 @@ class _TabViewState extends State<TabView> {
             ),
             if (widget.footer != null)
               Padding(
-                padding: const EdgeInsets.only(left: 12.0),
+                padding: const EdgeInsetsDirectional.only(start: 12.0),
                 child: DefaultTextStyle(
                   style: headerFooterTextStyle,
                   child: widget.footer!,
@@ -582,24 +583,50 @@ class _TabViewState extends State<TabView> {
         ),
       ),
       if (widget.tabs.isNotEmpty)
-        Expanded(child: widget.tabs[widget.currentIndex].body),
+        Expanded(
+          child: Focus(
+            autofocus: true,
+            child: IndexedStack(
+              index: widget.currentIndex,
+              children: widget.tabs.map((tab) => tab.body).toList(),
+            ),
+          ),
+        ),
     ]);
     if (widget.shortcutsEnabled) {
       void onClosePressed() {
         close(widget.currentIndex);
       }
 
+      // For more info, refer to [SingleActivator] docs
+      var ctrl = true;
+      var meta = false;
+      if (!kIsWeb &&
+          [TargetPlatform.iOS, TargetPlatform.macOS]
+              .contains(defaultTargetPlatform)) {
+        ctrl = false;
+        meta = true;
+      }
+
       return FocusScope(
         autofocus: true,
         child: CallbackShortcuts(
           bindings: {
-            const SingleActivator(LogicalKeyboardKey.f4, control: true):
-                onClosePressed,
-            const SingleActivator(LogicalKeyboardKey.keyW, control: true):
-                onClosePressed,
-            const SingleActivator(LogicalKeyboardKey.keyT, control: true): () {
-              widget.onNewPressed?.call();
-            },
+            SingleActivator(
+              LogicalKeyboardKey.f4,
+              control: ctrl,
+              meta: meta,
+            ): onClosePressed,
+            SingleActivator(
+              LogicalKeyboardKey.keyW,
+              control: ctrl,
+              meta: meta,
+            ): onClosePressed,
+            SingleActivator(
+              LogicalKeyboardKey.keyT,
+              control: ctrl,
+              meta: meta,
+            ): () => widget.onNewPressed?.call(),
             ...Map.fromIterable(
               List<int>.generate(9, (index) => index),
               key: (i) {
@@ -614,7 +641,7 @@ class _TabViewState extends State<TabView> {
                   LogicalKeyboardKey.digit8,
                   LogicalKeyboardKey.digit9,
                 ];
-                return SingleActivator(digits[i], control: true);
+                return SingleActivator(digits[i], control: ctrl, meta: meta);
               },
               value: (index) {
                 return () {
@@ -640,7 +667,7 @@ class _TabViewState extends State<TabView> {
 
 /// Represents a single tab within a [TabView].
 class Tab {
-  final _tabKey = GlobalKey<__TabState>();
+  final _tabKey = GlobalKey<__TabState>(debugLabel: 'Tab key');
 
   /// Creates a tab.
   Tab({
@@ -706,7 +733,7 @@ class _Tab extends StatefulWidget {
   final TabWidthBehavior tabWidthBehavior;
 
   @override
-  __TabState createState() => __TabState();
+  State<_Tab> createState() => __TabState();
 }
 
 class __TabState extends State<_Tab>
@@ -739,12 +766,12 @@ class __TabState extends State<_Tab>
   Widget build(BuildContext context) {
     super.build(context);
     assert(debugCheckHasFluentTheme(context));
-    final ThemeData theme = FluentTheme.of(context);
+    final theme = FluentTheme.of(context);
     final res = theme.resources;
     final localizations = FluentLocalizations.of(context);
 
     // The text of the tab, if a [Text] widget is used
-    final String? text = () {
+    final text = () {
       if (widget.tab.text is Text) {
         return (widget.tab.text as Text).data ??
             (widget.tab.text as Text).textSpan?.toPlainText();
@@ -752,24 +779,46 @@ class __TabState extends State<_Tab>
         return (widget.tab.text as RichText).text.toPlainText();
       }
     }();
+
     return HoverButton(
       key: widget.tab.key,
       semanticLabel: widget.tab.semanticLabel ?? text,
       onPressed: widget.onPressed,
       builder: (context, states) {
-        final foregroundColor = ButtonState.resolveWith((states) {
-          if (widget.selected) {
-            return res.textFillColorPrimary;
-          } else if (states.isPressing) {
-            return res.textFillColorTertiary;
-          } else if (states.isHovering) {
+        /// https://github.com/microsoft/microsoft-ui-xaml/blob/main/dev/TreeView/TreeView_themeresources.xaml#L19-L26
+        final foregroundColor = ButtonState.resolveWith<Color>((states) {
+          if (states.isPressing) {
             return res.textFillColorSecondary;
+          } else if (states.isHovering) {
+            return res.textFillColorPrimary;
           } else if (states.isDisabled) {
             return res.textFillColorDisabled;
           } else {
-            return res.textFillColorSecondary;
+            return widget.selected
+                ? res.textFillColorPrimary
+                : res.textFillColorSecondary;
           }
         }).resolve(states);
+
+        /// https://github.com/microsoft/microsoft-ui-xaml/blob/main/dev/TreeView/TreeView_themeresources.xaml#L10-L17
+        final backgroundColor = ButtonState.resolveWith<Color>((states) {
+          if (states.isPressing) {
+            return widget.selected
+                ? res.subtleFillColorSecondary
+                : res.subtleFillColorTertiary;
+          } else if (states.isHovering) {
+            return widget.selected
+                ? res.subtleFillColorTertiary
+                : res.subtleFillColorSecondary;
+          } else if (states.isDisabled) {
+            return res.subtleFillColorDisabled;
+          } else {
+            return widget.selected
+                ? res.subtleFillColorSecondary
+                : res.subtleFillColorTransparent;
+          }
+        }).resolve(states);
+
         const borderRadius = BorderRadius.vertical(top: Radius.circular(6));
         Widget child = FocusBorder(
           focused: states.isFocused,
@@ -780,8 +829,11 @@ class __TabState extends State<_Tab>
             height: _kTileHeight,
             constraints:
                 widget.tabWidthBehavior == TabWidthBehavior.sizeToContent
-                    ? null
-                    : const BoxConstraints(maxWidth: _kMaxTileWidth),
+                    ? const BoxConstraints(minHeight: 28.0)
+                    : const BoxConstraints(
+                        maxWidth: _kMaxTileWidth,
+                        minHeight: 28.0,
+                      ),
             padding: const EdgeInsetsDirectional.only(
               start: 8,
               top: 3,
@@ -790,13 +842,9 @@ class __TabState extends State<_Tab>
             ),
             decoration: BoxDecoration(
               borderRadius: borderRadius,
-              color: widget.selected
-                  ? null
-                  : ButtonThemeData.uncheckedInputColor(
-                      theme,
-                      states,
-                      transparentWhenNone: true,
-                    ),
+
+              // if selected, the background is painted by _TabPainter
+              color: widget.selected ? null : backgroundColor,
             ),
             child: () {
               final result = ClipRect(
@@ -886,8 +934,7 @@ class __TabState extends State<_Tab>
         }
         if (widget.selected) {
           child = CustomPaint(
-            willChange: false,
-            painter: _TabPainter(res.solidBackgroundFillColorTertiary),
+            painter: _TabPainter(backgroundColor),
             child: child,
           );
         }

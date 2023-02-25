@@ -1,10 +1,8 @@
 import 'package:fluent_ui/fluent_ui.dart';
-
+import 'package:fluent_ui/src/controls/form/pickers/pickers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
-
-import 'pickers.dart';
 
 /// The fields used on date picker.
 enum DatePickerField {
@@ -138,7 +136,7 @@ class DatePicker extends StatefulWidget {
   final List<DatePickerField>? fieldOrder;
 
   @override
-  _DatePickerState createState() => _DatePickerState();
+  State<DatePicker> createState() => _DatePickerState();
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
@@ -429,7 +427,7 @@ class _DatePickerContentPopUp extends StatefulWidget {
   final List<DatePickerField> fieldOrder;
 
   @override
-  __DatePickerContentPopUpState createState() =>
+  State<_DatePickerContentPopUp> createState() =>
       __DatePickerContentPopUpState();
 }
 
@@ -513,8 +511,10 @@ class __DatePickerContentPopUpState extends State<_DatePickerContentPopUp> {
               onSelectedItemChanged: (index) {
                 final month = index + 1;
                 final daysInMonth = _getDaysInMonth(month, localDate.year);
-                int day = localDate.day;
+
+                var day = localDate.day;
                 if (day > daysInMonth) day = daysInMonth;
+
                 handleDateChanged(DateTime(
                   localDate.year,
                   month,
@@ -563,8 +563,9 @@ class __DatePickerContentPopUpState extends State<_DatePickerContentPopUp> {
                   daysInMonth,
                   (day) {
                     day++;
-                    return ListTile(
-                      title: Center(
+                    return SizedBox(
+                      height: kOneLineTileHeight,
+                      child: Center(
                         child: Text(
                           formatter.format(DateTime(0, 0, day)),
                           style: kPickerPopupTextStyle(
@@ -636,8 +637,9 @@ class __DatePickerContentPopUpState extends State<_DatePickerContentPopUp> {
               children: List.generate(years, (index) {
                 // index++;
                 final realYear = widget.startYear + index + 1;
-                return ListTile(
-                  title: Center(
+                return SizedBox(
+                  height: kOneLineTileHeight,
+                  child: Center(
                     child: Text(
                       formatter.format(DateTime(realYear)),
                       style: kPickerPopupTextStyle(

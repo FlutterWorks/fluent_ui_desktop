@@ -2,7 +2,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 
 import 'package:flutter/foundation.dart';
 
-/// The typography applied to a [ThemeData]. It implements Windows' [Type Ramp](https://docs.microsoft.com/en-us/windows/uwp/design/style/typography#type-ramp)
+/// The typography applied to a [FluentThemeData]. It implements Windows' [Type Ramp](https://docs.microsoft.com/en-us/windows/uwp/design/style/typography#type-ramp)
 ///
 /// | Do                                                  | Don't                                                                             |
 /// | :-------------------------------------------------- | :-------------------------------------------------------------------------------- |
@@ -229,13 +229,14 @@ class Typography with Diagnosticable {
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
-    properties.add(DiagnosticsProperty<TextStyle>('header', display));
-    properties.add(DiagnosticsProperty<TextStyle>('titleLarge', titleLarge));
-    properties.add(DiagnosticsProperty<TextStyle>('title', title));
-    properties.add(DiagnosticsProperty<TextStyle>('subtitle', subtitle));
-    properties.add(DiagnosticsProperty<TextStyle>('bodyLarge', bodyLarge));
-    properties.add(DiagnosticsProperty<TextStyle>('bodyStrong', bodyStrong));
-    properties.add(DiagnosticsProperty<TextStyle>('body', body));
-    properties.add(DiagnosticsProperty<TextStyle>('caption', caption));
+    properties
+      ..add(DiagnosticsProperty<TextStyle>('header', display))
+      ..add(DiagnosticsProperty<TextStyle>('titleLarge', titleLarge))
+      ..add(DiagnosticsProperty<TextStyle>('title', title))
+      ..add(DiagnosticsProperty<TextStyle>('subtitle', subtitle))
+      ..add(DiagnosticsProperty<TextStyle>('bodyLarge', bodyLarge))
+      ..add(DiagnosticsProperty<TextStyle>('bodyStrong', bodyStrong))
+      ..add(DiagnosticsProperty<TextStyle>('body', body))
+      ..add(DiagnosticsProperty<TextStyle>('caption', caption));
   }
 }

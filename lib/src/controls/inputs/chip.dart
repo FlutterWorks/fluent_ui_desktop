@@ -68,8 +68,8 @@ class Chip extends StatelessWidget {
   Widget build(BuildContext context) {
     assert(debugCheckHasFluentTheme(context));
     final theme = ChipTheme.of(context);
-    final VisualDensity visualDensity = FluentTheme.of(context).visualDensity;
-    final double spacing = theme.spacing ?? _kChipSpacing;
+    final visualDensity = FluentTheme.of(context).visualDensity;
+    final spacing = theme.spacing ?? _kChipSpacing;
     return HoverButton(
       semanticLabel: semanticLabel,
       onPressed: onPressed,
@@ -164,7 +164,7 @@ class ChipTheme extends InheritedTheme {
   /// The data from the closest instance of this class that encloses the given
   /// context.
   ///
-  /// Defaults to [ThemeData.chipTheme]
+  /// Defaults to [FluentThemeData.chipTheme]
   ///
   /// Typical usage is as follows:
   ///
@@ -179,8 +179,7 @@ class ChipTheme extends InheritedTheme {
   }
 
   static ChipThemeData _getInheritedChipThemeData(BuildContext context) {
-    final ChipTheme? theme =
-        context.dependOnInheritedWidgetOfExactType<ChipTheme>();
+    final theme = context.dependOnInheritedWidgetOfExactType<ChipTheme>();
     return theme?.data ?? FluentTheme.of(context).chipTheme;
   }
 
@@ -216,8 +215,8 @@ class ChipThemeData with Diagnosticable {
     this.textStyle,
   });
 
-  factory ChipThemeData.standard(ThemeData style) {
-    Color normalColor(Set<ButtonStates> states) => style.brightness.isLight
+  factory ChipThemeData.standard(FluentThemeData theme) {
+    Color normalColor(Set<ButtonStates> states) => theme.brightness.isLight
         ? states.isPressing
             ? const Color(0xFFc1c1c1)
             : states.isFocused || states.isHovering
@@ -239,18 +238,18 @@ class ChipThemeData with Diagnosticable {
       textStyle: ButtonState.resolveWith((states) {
         return TextStyle(
           color: states.isDisabled
-              ? style.disabledColor
+              ? theme.disabledColor
               : normalColor(states).basedOnLuminance(),
         );
       }),
       selectedDecoration: ButtonState.resolveWith((states) {
         return BoxDecoration(
           borderRadius: BorderRadius.circular(4.0),
-          color: ButtonThemeData.checkedInputColor(style, states),
+          color: ButtonThemeData.checkedInputColor(theme, states),
         );
       }),
       selectedTextStyle: ButtonState.resolveWith((states) {
-        return TextStyle(color: FilledButton.foregroundColor(style, states));
+        return TextStyle(color: FilledButton.foregroundColor(theme, states));
       }),
     );
   }
@@ -289,17 +288,16 @@ class ChipThemeData with Diagnosticable {
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
-    properties.add(DiagnosticsProperty<ButtonState<Decoration?>?>(
-        'decoration', decoration));
-    properties.add(DiagnosticsProperty<ButtonState<Decoration?>?>(
-        'selectedDecoration', selectedDecoration));
     properties
-        .add(DoubleProperty('spacing', spacing, defaultValue: _kChipSpacing));
-    properties
-        .add(DiagnosticsProperty<ButtonState<MouseCursor>?>('cursor', cursor));
-    properties.add(
-        DiagnosticsProperty<ButtonState<TextStyle?>?>('textStyle', textStyle));
-    properties.add(DiagnosticsProperty<ButtonState<TextStyle?>?>(
-        'selectedTextStyle', selectedTextStyle));
+      ..add(DiagnosticsProperty<ButtonState<Decoration?>?>(
+          'decoration', decoration))
+      ..add(DiagnosticsProperty<ButtonState<Decoration?>?>(
+          'selectedDecoration', selectedDecoration))
+      ..add(DoubleProperty('spacing', spacing, defaultValue: _kChipSpacing))
+      ..add(DiagnosticsProperty<ButtonState<MouseCursor>?>('cursor', cursor))
+      ..add(
+          DiagnosticsProperty<ButtonState<TextStyle?>?>('textStyle', textStyle))
+      ..add(DiagnosticsProperty<ButtonState<TextStyle?>?>(
+          'selectedTextStyle', selectedTextStyle));
   }
 }

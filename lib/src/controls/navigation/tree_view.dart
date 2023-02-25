@@ -1,6 +1,5 @@
-import 'package:flutter/foundation.dart';
-
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 const double _whiteSpace = 8.0;
@@ -191,7 +190,7 @@ class TreeViewItem with Diagnosticable {
           leading: source.leading,
           content: source.content,
           value: source.value,
-          children: source.children.map((i) => TreeViewItem.from(i)).toList(),
+          children: source.children.map(TreeViewItem.from).toList(),
           collapsable: source.collapsable,
           expanded: source.expanded,
           selected: source.selected,
@@ -215,7 +214,7 @@ class TreeViewItem with Diagnosticable {
   /// If this is the root node, the depth is 0
   int get depth {
     if (parent != null) {
-      int count = 1;
+      var count = 1;
       TreeViewItem? currentParent = parent!;
       while (currentParent?.parent != null) {
         count++;
@@ -233,7 +232,7 @@ class TreeViewItem with Diagnosticable {
   /// If this is the root parent, [this] is returned
   TreeViewItem get lastParent {
     if (parent != null) {
-      TreeViewItem currentParent = parent!;
+      var currentParent = parent!;
       while (currentParent.parent != null) {
         if (currentParent.parent != null) currentParent = currentParent.parent!;
       }
@@ -282,9 +281,9 @@ class TreeViewItem with Diagnosticable {
   ///   ?.updateSelected(widget.deselectParentWhenChildrenDeselected))
   /// ```
   void updateSelected(bool deselectParentWhenChildrenDeselected) {
-    bool hasNull = false;
-    bool hasFalse = false;
-    bool hasTrue = false;
+    var hasNull = false;
+    var hasFalse = false;
+    var hasTrue = false;
 
     for (final child in children) {
       if (child.selected == null) {
@@ -384,11 +383,12 @@ extension TreeViewItemCollection on List<TreeViewItem> {
   /// and calculates other internal properties.
   List<TreeViewItem> build({TreeViewItem? parent}) {
     if (isNotEmpty) {
-      final List<TreeViewItem> list = [];
+      final list = <TreeViewItem>[];
       final anyExpandableSiblings = any((i) => i.isExpandable);
       for (final item in [...this]) {
-        item._parent = parent;
-        item._anyExpandableSiblings = anyExpandableSiblings;
+        item
+          .._parent = parent
+          .._anyExpandableSiblings = anyExpandableSiblings;
         if (parent != null) {
           item._visible = parent._visible;
         }
@@ -399,9 +399,10 @@ extension TreeViewItemCollection on List<TreeViewItem> {
             item.children.any((i) => i.isExpandable);
         for (final child in item.children) {
           // only add the children when it's expanded and visible
-          child._visible = item.expanded && item._visible;
-          child._parent = item;
-          child._anyExpandableSiblings = itemAnyExpandableSiblings;
+          child
+            .._visible = item.expanded && item._visible
+            .._parent = item
+            .._anyExpandableSiblings = itemAnyExpandableSiblings;
           if (child._visible) {
             list.add(child);
           }
@@ -638,7 +639,7 @@ class TreeViewState extends State<TreeView> with AutomaticKeepAliveClientMixin {
       );
     } else {
       // make sure that at most only a single item is selected
-      int foundSelected = 0;
+      var foundSelected = 0;
       for (final item in widget.items) {
         final selected = item.selected;
         // the null "indeterminute" state is not allowed in single select mode
@@ -684,7 +685,6 @@ class TreeViewState extends State<TreeView> with AutomaticKeepAliveClientMixin {
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 28.0),
         child: ListView.builder(
-          scrollDirection: Axis.vertical,
           // If shrinkWrap is true, then we default to not using the primary
           // scroll controller (should not normally need any controller in
           // this case).
@@ -735,7 +735,7 @@ class TreeViewState extends State<TreeView> with AutomaticKeepAliveClientMixin {
                   case TreeViewSelectionMode.multiple:
                     setState(() {
                       final newSelectionState =
-                          (item.selected == null || item.selected == false);
+                          item.selected == null || item.selected == false;
                       item.setSelectionStateForMultiSelectionMode(
                           newSelectionState,
                           widget.deselectParentWhenChildrenDeselected);
@@ -770,8 +770,9 @@ class TreeViewState extends State<TreeView> with AutomaticKeepAliveClientMixin {
                   // Remove the loading indicator.
                   // Toggle the expand icon.
                   setState(() {
-                    item.loading = false;
-                    item.expanded = !item.expanded;
+                    item
+                      ..loading = false
+                      ..expanded = !item.expanded;
                     _buildItems();
                   });
                 }
@@ -887,6 +888,12 @@ class _TreeViewItem extends StatelessWidget {
           horizontal: 4.0,
         ),
         builder: (context, states) {
+          final itemForegroundColor = states.isDisabled
+              ? theme.resources.textFillColorDisabled
+              : states.isPressing
+                  ? theme.resources.textFillColorSecondary
+                  : theme.resources.textFillColorPrimary;
+
           return FocusBorder(
             focused: states.isFocused,
             child: Stack(children: [
@@ -925,7 +932,6 @@ class _TreeViewItem extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6.0),
                 ),
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // Checkbox for multi selection mode
                     if (selectionMode == TreeViewSelectionMode.multiple)
@@ -967,7 +973,7 @@ class _TreeViewItem extends StatelessWidget {
                                       ? FluentIcons.chevron_right
                                       : FluentIcons.chevron_left,
                               size: 8.0,
-                              color: Colors.grey[80],
+                              color: itemForegroundColor,
                             ),
                           ),
                         )
@@ -976,7 +982,8 @@ class _TreeViewItem extends StatelessWidget {
                       // have the same indentation, regardless whether or not
                       // they are expandable.
                       const Padding(
-                          padding: EdgeInsetsDirectional.only(start: 24.0)),
+                        padding: EdgeInsetsDirectional.only(start: 24.0),
+                      ),
 
                     // Leading icon
                     if (item.leading != null)
@@ -987,7 +994,10 @@ class _TreeViewItem extends StatelessWidget {
                         ),
                         width: 20.0,
                         child: IconTheme.merge(
-                          data: const IconThemeData(size: 20.0),
+                          data: IconThemeData(
+                            size: 20.0,
+                            color: itemForegroundColor,
+                          ),
                           child: item.leading!,
                         ),
                       )
@@ -999,9 +1009,7 @@ class _TreeViewItem extends StatelessWidget {
                       child: DefaultTextStyle(
                         style: TextStyle(
                           fontSize: 12.0,
-                          color: theme.typography.body!.color!.withOpacity(
-                            states.isPressing ? 0.7 : 1.0,
-                          ),
+                          color: itemForegroundColor,
                         ),
                         child: item.content,
                       ),
@@ -1010,10 +1018,10 @@ class _TreeViewItem extends StatelessWidget {
                 ),
               ),
               if (selected && selectionMode == TreeViewSelectionMode.single)
-                Positioned(
+                PositionedDirectional(
                   top: 6.0,
                   bottom: 6.0,
-                  left: 0.0,
+                  start: 0.0,
                   child: Container(
                     width: 3.0,
                     decoration: BoxDecoration(

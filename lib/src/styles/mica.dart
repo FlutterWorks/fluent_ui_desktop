@@ -43,7 +43,7 @@ class Mica extends StatelessWidget {
   final double elevation;
 
   /// The color to paint the background area with. If null,
-  /// [ThemeData.micaBackgroundColor] is used.
+  /// [FluentThemeData.micaBackgroundColor] is used.
   final Color? backgroundColor;
 
   /// The border radius applied to the area.
@@ -56,8 +56,8 @@ class Mica extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     assert(debugCheckHasFluentTheme(context));
-    final ThemeData theme = FluentTheme.of(context);
-    final Color boxColor = backgroundColor ?? theme.micaBackgroundColor;
+    final theme = FluentTheme.of(context);
+    final boxColor = backgroundColor ?? theme.micaBackgroundColor;
     final Widget result = DecoratedBox(
       decoration: BoxDecoration(
         color: boxColor,

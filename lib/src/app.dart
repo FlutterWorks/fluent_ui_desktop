@@ -134,25 +134,25 @@ class FluentApp extends StatefulWidget {
   /// Default visual properties, like colors fonts and shapes, for this app's
   /// fluent widgets.
   ///
-  /// A second [darkTheme] [ThemeData] value, which is used to provide a dark
+  /// A second [darkTheme] [FluentThemeData] value, which is used to provide a dark
   /// version of the user interface can also be specified. [themeMode] will
   /// control which theme will be used if a [darkTheme] is provided.
   ///
-  /// The default value of this property is the value of `ThemeData(brightness: Brightness.light)`.
-  final ThemeData? theme;
+  /// The default value of this property is the value of `FluentThemeData(brightness: Brightness.light)`.
+  final FluentThemeData? theme;
 
-  /// The [ThemeData] to use when a 'dark mode' is requested by the system.
+  /// The [FluentThemeData] to use when a 'dark mode' is requested by the system.
   ///
   /// Some host platforms allow the users to select a system-wide 'dark mode',
   /// or the application may want to offer the user the ability to choose a
   /// dark theme just for this application. This is theme that will be used for
   /// such cases. [themeMode] will control which theme will be used.
   ///
-  /// This theme should have a [ThemeData.brightness] set to [Brightness.dark].
+  /// This theme should have a [FluentThemeData.brightness] set to [Brightness.dark].
   ///
   /// Uses [theme] instead when null. Defaults to the value of
-  /// [ThemeData(brightness: Brightness.light)] when both [darkTheme] and [theme] are null.
-  final ThemeData? darkTheme;
+  /// [FluentThemeData(brightness: Brightness.light)] when both [darkTheme] and [theme] are null.
+  final FluentThemeData? darkTheme;
 
   /// Determines which theme will be used by the application if both [theme]
   /// and [darkTheme] are provided.
@@ -353,7 +353,7 @@ class FluentApp extends StatefulWidget {
   final bool useInheritedMediaQuery;
 
   @override
-  _FluentAppState createState() => _FluentAppState();
+  State<FluentApp> createState() => _FluentAppState();
 }
 
 class _FluentAppState extends State<FluentApp> {
@@ -393,18 +393,18 @@ class _FluentAppState extends State<FluentApp> {
     );
   }
 
-  ThemeData theme(BuildContext context) {
+  FluentThemeData theme(BuildContext context) {
     final mode = widget.themeMode ?? ThemeMode.system;
     final platformBrightness = MediaQuery.platformBrightnessOf(context);
     final usedarkStyle = mode == ThemeMode.dark ||
         (mode == ThemeMode.system && platformBrightness == Brightness.dark);
 
-    ThemeData data = () {
-      late ThemeData result;
+    final data = () {
+      late FluentThemeData result;
       if (usedarkStyle) {
-        result = widget.darkTheme ?? widget.theme ?? ThemeData();
+        result = widget.darkTheme ?? widget.theme ?? FluentThemeData();
       } else {
-        result = widget.theme ?? ThemeData();
+        result = widget.theme ?? FluentThemeData();
       }
       return result;
     }();
@@ -414,33 +414,19 @@ class _FluentAppState extends State<FluentApp> {
   Widget _builder(BuildContext context, Widget? child) {
     final themeData = theme(context);
     final mTheme = context.findAncestorWidgetOfExactType<m.Theme>();
+
     return m.AnimatedTheme(
       data: mTheme?.data ??
           m.ThemeData(
+            extensions: themeData.extensions.values,
             brightness: themeData.brightness,
             canvasColor: themeData.cardColor,
             textSelectionTheme: TextSelectionThemeData(
               selectionColor: themeData.accentColor
-                  .resolveFromBrightness(themeData.brightness)
+                  .defaultBrushFor(themeData.brightness)
                   .withOpacity(0.8),
               cursorColor: themeData.inactiveColor,
             ),
-            // colorScheme: m.ColorScheme.fromSwatch(
-            //   primarySwatch: m.MaterialColor(
-            //     400,
-            //     {
-            //       100: themeData.accentColor.lightest,
-            //       200: themeData.accentColor.lighter,
-            //       300: themeData.accentColor.light,
-            //       400: themeData.accentColor.normal,
-            //       500: themeData.accentColor.dark,
-            //       600: themeData.accentColor.darker,
-            //       700: themeData.accentColor.darkest,
-            //     },
-            //   ),
-            //   primaryColorDark: themeData.accentColor.dark,
-            //   brightness: themeData.brightness,
-            // ),
           ),
       child: AnimatedFluentTheme(
         curve: themeData.animationCurve,

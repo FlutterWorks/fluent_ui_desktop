@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
 import 'fluent_localizations_ar.dart';
+import 'fluent_localizations_be.dart';
 import 'fluent_localizations_cs.dart';
 import 'fluent_localizations_de.dart';
 import 'fluent_localizations_en.dart';
@@ -20,12 +21,15 @@ import 'fluent_localizations_it.dart';
 import 'fluent_localizations_ja.dart';
 import 'fluent_localizations_ko.dart';
 import 'fluent_localizations_ms.dart';
+import 'fluent_localizations_my.dart';
 import 'fluent_localizations_nl.dart';
 import 'fluent_localizations_pl.dart';
 import 'fluent_localizations_pt.dart';
 import 'fluent_localizations_ro.dart';
 import 'fluent_localizations_ru.dart';
+import 'fluent_localizations_sv.dart';
 import 'fluent_localizations_tr.dart';
+import 'fluent_localizations_uk.dart';
 import 'fluent_localizations_uz.dart';
 import 'fluent_localizations_zh.dart';
 
@@ -115,6 +119,7 @@ abstract class FluentLocalizations {
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
     Locale('ar'),
+    Locale('be'),
     Locale('cs'),
     Locale('de'),
     Locale('es'),
@@ -128,12 +133,15 @@ abstract class FluentLocalizations {
     Locale('ja'),
     Locale('ko'),
     Locale('ms'),
+    Locale('my'),
     Locale('nl'),
     Locale('pl'),
     Locale('pt'),
     Locale('ro'),
     Locale('ru'),
+    Locale('sv'),
     Locale('tr'),
+    Locale('uk'),
     Locale('uz'),
     Locale('zh'),
     Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant')
@@ -339,6 +347,7 @@ class _FluentLocalizationsDelegate
   @override
   bool isSupported(Locale locale) => <String>[
         'ar',
+        'be',
         'cs',
         'de',
         'en',
@@ -353,12 +362,15 @@ class _FluentLocalizationsDelegate
         'ja',
         'ko',
         'ms',
+        'my',
         'nl',
         'pl',
         'pt',
         'ro',
         'ru',
+        'sv',
         'tr',
+        'uk',
         'uz',
         'zh'
       ].contains(locale.languageCode);
@@ -384,6 +396,8 @@ FluentLocalizations lookupFluentLocalizations(Locale locale) {
   switch (locale.languageCode) {
     case 'ar':
       return FluentLocalizationsAr();
+    case 'be':
+      return FluentLocalizationsBe();
     case 'cs':
       return FluentLocalizationsCs();
     case 'de':
@@ -412,6 +426,8 @@ FluentLocalizations lookupFluentLocalizations(Locale locale) {
       return FluentLocalizationsKo();
     case 'ms':
       return FluentLocalizationsMs();
+    case 'my':
+      return FluentLocalizationsMy();
     case 'nl':
       return FluentLocalizationsNl();
     case 'pl':
@@ -422,8 +438,12 @@ FluentLocalizations lookupFluentLocalizations(Locale locale) {
       return FluentLocalizationsRo();
     case 'ru':
       return FluentLocalizationsRu();
+    case 'sv':
+      return FluentLocalizationsSv();
     case 'tr':
       return FluentLocalizationsTr();
+    case 'uk':
+      return FluentLocalizationsUk();
     case 'uz':
       return FluentLocalizationsUz();
     case 'zh':

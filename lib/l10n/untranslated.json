@@ -1,12 +1,7 @@
 {
-  "de": [
-    "hour",
-    "minute",
+  "be": [
     "am",
-    "pm",
-    "month",
-    "day",
-    "year"
+    "pm"
   ],
 
   "ko": [
@@ -29,6 +24,11 @@
     "year"
   ],
 
+  "my": [
+    "am",
+    "pm"
+  ],
+
   "pl": [
     "hour",
     "minute",
@@ -47,6 +47,11 @@
     "month",
     "day",
     "year"
+  ],
+
+  "uk": [
+    "am",
+    "pm"
   ],
 
   "uz": [

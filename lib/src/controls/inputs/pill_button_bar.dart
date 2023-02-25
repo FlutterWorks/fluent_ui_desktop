@@ -1,6 +1,5 @@
-import 'package:flutter/foundation.dart';
-
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/foundation.dart';
 
 const double _kMinHeight = 28.0;
 const double _kMaxHeight = 46.0;
@@ -105,16 +104,16 @@ class _PillButtonBarItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = PillButtonBarTheme.of(context);
-    final VisualDensity visualDensity = FluentTheme.of(context).visualDensity;
+    final visualDensity = FluentTheme.of(context).visualDensity;
     return HoverButton(
       onPressed: onPressed,
       builder: (context, states) {
-        final Color selectedColor =
+        final selectedColor =
             theme.selectedColor?.resolve(states) ?? Colors.transparent;
-        final Color unselectedColor = theme.unselectedColor?.resolve(states) ??
+        final unselectedColor = theme.unselectedColor?.resolve(states) ??
             FluentTheme.of(context).accentColor.dark;
         return Align(
-          alignment: Alignment.center,
+          alignment: AlignmentDirectional.center,
           child: Container(
             decoration: BoxDecoration(
               color: selected ? selectedColor : unselectedColor,
@@ -124,7 +123,7 @@ class _PillButtonBarItem extends StatelessWidget {
               minWidth: _kMinButtonWidth + visualDensity.horizontal,
               maxHeight: _kMaxButtonHeight + visualDensity.vertical,
             ),
-            alignment: Alignment.center,
+            alignment: AlignmentDirectional.center,
             padding: EdgeInsets.symmetric(
               horizontal: 16.0 + visualDensity.horizontal,
               vertical: 3.0,
@@ -187,7 +186,7 @@ class PillButtonBarTheme extends InheritedTheme {
   /// The data from the closest instance of this class that encloses the given
   /// context.
   ///
-  /// Defaults to [ThemeData.pillButtonBarTheme]
+  /// Defaults to [FluentThemeData.pillButtonBarTheme]
   ///
   /// Typical usage is as follows:
   ///
@@ -239,7 +238,7 @@ class PillButtonBarThemeData with Diagnosticable {
     this.unselectedTextStyle,
   });
 
-  factory PillButtonBarThemeData.standard(ThemeData style) {
+  factory PillButtonBarThemeData.standard(FluentThemeData theme) {
     Color applyOpacity(Color color, Set<ButtonStates> states) {
       return color.withOpacity(
         states.isPressing
@@ -252,12 +251,12 @@ class PillButtonBarThemeData with Diagnosticable {
       );
     }
 
-    final isLight = style.brightness.isLight;
+    final isLight = theme.brightness.isLight;
     final unselectedColor =
-        isLight ? style.accentColor.dark : const Color(0xFF141414);
+        isLight ? theme.accentColor.dark : const Color(0xFF141414);
 
     return PillButtonBarThemeData(
-      backgroundColor: isLight ? style.accentColor : const Color(0xFF212121),
+      backgroundColor: isLight ? theme.accentColor : const Color(0xFF212121),
       selectedColor: ButtonState.resolveWith((states) {
         return applyOpacity(
             isLight ? Colors.white : const Color(0xFF404040), states);

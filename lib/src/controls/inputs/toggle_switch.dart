@@ -112,7 +112,7 @@ class ToggleSwitch extends StatefulWidget {
   }
 
   @override
-  _ToggleSwitchState createState() => _ToggleSwitchState();
+  State<ToggleSwitch> createState() => _ToggleSwitchState();
 }
 
 class _ToggleSwitchState extends State<ToggleSwitch> {
@@ -134,8 +134,7 @@ class _ToggleSwitchState extends State<ToggleSwitch> {
   @override
   Widget build(BuildContext context) {
     assert(debugCheckHasFluentTheme(context));
-    final ToggleSwitchThemeData style =
-        ToggleSwitchTheme.of(context).merge(widget.style);
+    final style = ToggleSwitchTheme.of(context).merge(widget.style);
     final sliderGestureWidth = 45.0 + (style.padding?.horizontal ?? 0.0);
     return HoverButton(
       autofocus: widget.autofocus,
@@ -170,7 +169,9 @@ class _ToggleSwitchState extends State<ToggleSwitch> {
       builder: (context, states) {
         Widget child = AnimatedContainer(
           alignment: _alignment ??
-              (widget.checked ? Alignment.centerRight : Alignment.centerLeft),
+              (widget.checked
+                  ? AlignmentDirectional.centerEnd
+                  : AlignmentDirectional.centerStart),
           height: 20,
           width: 40,
           duration: style.animationDuration ?? Duration.zero,
@@ -280,7 +281,7 @@ class ToggleSwitchTheme extends InheritedTheme {
   /// The data from the closest instance of this class that encloses the given
   /// context.
   ///
-  /// Defaults to [ThemeData.toggleSwitchTheme]
+  /// Defaults to [FluentThemeData.toggleSwitchTheme]
   ///
   /// Typical usage is as follows:
   ///
@@ -296,7 +297,7 @@ class ToggleSwitchTheme extends InheritedTheme {
 
   static ToggleSwitchThemeData _getInheritedToggleSwitchThemeData(
       BuildContext context) {
-    final ToggleSwitchTheme? checkboxTheme =
+    final checkboxTheme =
         context.dependOnInheritedWidgetOfExactType<ToggleSwitchTheme>();
     return checkboxTheme?.data ?? FluentTheme.of(context).toggleSwitchTheme;
   }
@@ -337,7 +338,7 @@ class ToggleSwitchThemeData with Diagnosticable {
     this.uncheckedDecoration,
   });
 
-  factory ToggleSwitchThemeData.standard(ThemeData style) {
+  factory ToggleSwitchThemeData.standard(FluentThemeData theme) {
     final defaultThumbDecoration = BoxDecoration(
       borderRadius: BorderRadius.circular(100),
     );
@@ -349,9 +350,8 @@ class ToggleSwitchThemeData with Diagnosticable {
     return ToggleSwitchThemeData(
       checkedDecoration: ButtonState.resolveWith((states) {
         return defaultDecoration.copyWith(
-          color: ButtonThemeData.checkedInputColor(style, states),
+          color: ButtonThemeData.checkedInputColor(theme, states),
           border: Border.all(
-            width: 1,
             color: Colors.transparent,
           ),
         );
@@ -359,33 +359,32 @@ class ToggleSwitchThemeData with Diagnosticable {
       uncheckedDecoration: ButtonState.resolveWith((states) {
         return defaultDecoration.copyWith(
           color: states.isNone
-              ? style.resources.subtleFillColorTransparent
-              : ButtonThemeData.uncheckedInputColor(style, states),
+              ? theme.resources.subtleFillColorTransparent
+              : ButtonThemeData.uncheckedInputColor(theme, states),
           border: Border.all(
-            width: 1,
             color: !states.isDisabled
-                ? style.borderInputColor
-                : style.brightness.isLight
+                ? theme.borderInputColor
+                : theme.brightness.isLight
                     ? const Color.fromRGBO(0, 0, 0, 0.2169)
                     : const Color.fromRGBO(255, 255, 255, 0.1581),
           ),
         );
       }),
       margin: const EdgeInsets.all(4),
-      animationDuration: style.fasterAnimationDuration,
-      animationCurve: style.animationCurve,
+      animationDuration: theme.fasterAnimationDuration,
+      animationCurve: theme.animationCurve,
       checkedThumbDecoration: ButtonState.resolveWith((states) {
         return defaultThumbDecoration.copyWith(
           color: states.isDisabled
-              ? style.resources.textOnAccentFillColorDisabled
-              : style.resources.textOnAccentFillColorPrimary,
+              ? theme.resources.textOnAccentFillColorDisabled
+              : theme.resources.textOnAccentFillColorPrimary,
         );
       }),
       uncheckedThumbDecoration: ButtonState.resolveWith((states) {
         return defaultThumbDecoration.copyWith(
           color: states.isDisabled
-              ? style.resources.textFillColorDisabled
-              : style.resources.textFillColorSecondary,
+              ? theme.resources.textFillColorDisabled
+              : theme.resources.textFillColorSecondary,
         );
       }),
     );
@@ -431,28 +430,27 @@ class ToggleSwitchThemeData with Diagnosticable {
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
-    properties.add(DiagnosticsProperty<EdgeInsetsGeometry?>('margin', margin));
     properties
-        .add(DiagnosticsProperty<EdgeInsetsGeometry?>('padding', padding));
-    properties
-        .add(DiagnosticsProperty<Curve?>('animationCurve', animationCurve));
-    properties.add(
-        DiagnosticsProperty<Duration?>('animationDuration', animationDuration));
-    properties.add(ObjectFlagProperty<ButtonState<Decoration?>?>.has(
-      'checkedDecoration',
-      checkedDecoration,
-    ));
-    properties.add(ObjectFlagProperty<ButtonState<Decoration?>?>.has(
-      'uncheckedDecoration',
-      uncheckedDecoration,
-    ));
-    properties.add(ObjectFlagProperty<ButtonState<Decoration?>?>.has(
-      'checkedThumbDecoration',
-      checkedThumbDecoration,
-    ));
-    properties.add(ObjectFlagProperty<ButtonState<Decoration?>?>.has(
-      'uncheckedThumbDecoration',
-      uncheckedThumbDecoration,
-    ));
+      ..add(DiagnosticsProperty<EdgeInsetsGeometry?>('margin', margin))
+      ..add(DiagnosticsProperty<EdgeInsetsGeometry?>('padding', padding))
+      ..add(DiagnosticsProperty<Curve?>('animationCurve', animationCurve))
+      ..add(DiagnosticsProperty<Duration?>(
+          'animationDuration', animationDuration))
+      ..add(ObjectFlagProperty<ButtonState<Decoration?>?>.has(
+        'checkedDecoration',
+        checkedDecoration,
+      ))
+      ..add(ObjectFlagProperty<ButtonState<Decoration?>?>.has(
+        'uncheckedDecoration',
+        uncheckedDecoration,
+      ))
+      ..add(ObjectFlagProperty<ButtonState<Decoration?>?>.has(
+        'checkedThumbDecoration',
+        checkedThumbDecoration,
+      ))
+      ..add(ObjectFlagProperty<ButtonState<Decoration?>?>.has(
+        'uncheckedThumbDecoration',
+        uncheckedThumbDecoration,
+      ));
   }
 }

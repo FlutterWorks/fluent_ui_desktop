@@ -1,19 +1,20 @@
 import 'dart:ui' show lerpDouble;
 
+import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
 
-import 'package:fluent_ui/fluent_ui.dart';
-
-/// A Split Button has two parts that can be invoked separately.
-/// One part behaves like a standard button and invokes an immediate action.
-/// The other part invokes a flyout that contains additional options that the
-/// user can choose from.
+/// A Split Button has two parts that can be invoked separately. One part
+/// behaves like a standard button and invokes an immediate action. The other
+/// part invokes a flyout that contains additional options that the user can
+/// choose from. Use a split button control when you want the user to be able to
+/// initiate an immediate action or choose from additional options independently.
 ///
-/// ![SplitButton Preview](https://github.com/bdlukaa/fluent_ui#split-button)
+/// ![SplitButton Preview](https://learn.microsoft.com/en-us/windows/apps/design/controls/images/split-button-rtb.png)
 ///
 /// See also:
-///   - [Button]
-///   - [IconButton]
+///
+///   * [Button], a button gives the user a way to trigger an immediate action.
+///   * [IconButton], a button with an icon
 class SplitButtonBar extends StatelessWidget {
   /// Creates a button bar with space in between the buttons.
   ///
@@ -32,7 +33,7 @@ class SplitButtonBar extends StatelessWidget {
   final List<Widget> buttons;
 
   /// The style applied to this button bar. If non-null, it's
-  /// merged with [ThemeData.splitButtonThemeData]
+  /// merged with [FluentThemeData.splitButtonThemeData]
   final SplitButtonThemeData? style;
 
   @override
@@ -120,7 +121,7 @@ class SplitButtonTheme extends InheritedTheme {
   /// The data from the closest instance of this class that encloses the given
   /// context.
   ///
-  /// Defaults to [ThemeData.splitButtonTheme]
+  /// Defaults to [FluentThemeData.splitButtonTheme]
   ///
   /// Typical usage is as follows:
   ///
@@ -136,7 +137,7 @@ class SplitButtonTheme extends InheritedTheme {
 
   static SplitButtonThemeData _getInheritedSplitButtonThemeData(
       BuildContext context) {
-    final SplitButtonTheme? checkboxTheme =
+    final checkboxTheme =
         context.dependOnInheritedWidgetOfExactType<SplitButtonTheme>();
     return checkboxTheme?.data ?? FluentTheme.of(context).splitButtonTheme;
   }
@@ -167,7 +168,7 @@ class SplitButtonThemeData with Diagnosticable {
     this.actionButtonStyle,
   });
 
-  factory SplitButtonThemeData.standard(ThemeData style) {
+  factory SplitButtonThemeData.standard(FluentThemeData theme) {
     return SplitButtonThemeData(
       borderRadius: BorderRadius.circular(4),
       interval: 1,

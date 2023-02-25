@@ -1,7 +1,6 @@
+import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/material.dart' as m;
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:fluent_ui/fluent_ui.dart';
 
 Widget wrapApp({required Widget child}) {
   return FluentApp(home: child);
@@ -61,7 +60,7 @@ void main() {
         m.Theme(
           data: m.ThemeData.light(),
           child: FluentApp(
-            theme: ThemeData.dark(),
+            theme: FluentThemeData.dark(),
             home: Builder(
               builder: (BuildContext context) {
                 return Column(

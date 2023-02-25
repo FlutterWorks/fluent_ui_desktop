@@ -15,7 +15,7 @@ class Divider extends StatelessWidget {
   /// The current direction of the slider. Uses [Axis.horizontal] by default
   final Axis direction;
 
-  /// The `style` of the divider. It's mescled with [ThemeData.dividerThemeData]
+  /// The `style` of the divider. It's mescled with [FluentThemeData.dividerThemeData]
   final DividerThemeData? style;
 
   /// The size of the divider. The opposite of the [DividerThemeData.thickness]
@@ -24,18 +24,19 @@ class Divider extends StatelessWidget {
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
-    properties.add(DoubleProperty(
-      'size',
-      size,
-      ifNull: 'indeterminate',
-      defaultValue: 1.0,
-    ));
-    properties.add(DiagnosticsProperty('style', style));
-    properties.add(EnumProperty(
-      'direction',
-      direction,
-      defaultValue: Axis.horizontal,
-    ));
+    properties
+      ..add(DoubleProperty(
+        'size',
+        size,
+        ifNull: 'indeterminate',
+        defaultValue: 1.0,
+      ))
+      ..add(DiagnosticsProperty('style', style))
+      ..add(EnumProperty(
+        'direction',
+        direction,
+        defaultValue: Axis.horizontal,
+      ));
   }
 
   @override
@@ -92,7 +93,7 @@ class DividerTheme extends InheritedTheme {
   }
 
   /// Returns the [data] from the closest [DividerTheme] ancestor. If there is
-  /// no ancestor, it returns [ThemeData.dividerTheme]. Applications can assume
+  /// no ancestor, it returns [FluentThemeData.dividerTheme]. Applications can assume
   /// that the returned value will not be null.
   ///
   /// Typical usage is as follows:
@@ -141,13 +142,13 @@ class DividerThemeData with Diagnosticable {
     this.horizontalMargin,
   });
 
-  factory DividerThemeData.standard(ThemeData style) {
+  factory DividerThemeData.standard(FluentThemeData theme) {
     return DividerThemeData(
       thickness: 1,
       horizontalMargin: const EdgeInsets.symmetric(horizontal: 10),
       verticalMargin: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        color: style.resources.dividerStrokeColorDefault,
+        color: theme.resources.dividerStrokeColorDefault,
       ),
     );
   }
@@ -177,9 +178,10 @@ class DividerThemeData with Diagnosticable {
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
-    properties.add(DiagnosticsProperty<Decoration>('decoration', decoration));
-    properties.add(DiagnosticsProperty('horizontalMargin', horizontalMargin));
-    properties.add(DiagnosticsProperty('verticalMargin', verticalMargin));
-    properties.add(DoubleProperty('thickness', thickness, defaultValue: 1.0));
+    properties
+      ..add(DiagnosticsProperty<Decoration>('decoration', decoration))
+      ..add(DiagnosticsProperty('horizontalMargin', horizontalMargin))
+      ..add(DiagnosticsProperty('verticalMargin', verticalMargin))
+      ..add(DoubleProperty('thickness', thickness, defaultValue: 1.0));
   }
 }
