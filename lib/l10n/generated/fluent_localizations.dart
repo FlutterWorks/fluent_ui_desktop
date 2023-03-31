@@ -7,8 +7,10 @@ import 'package:intl/intl.dart' as intl;
 
 import 'fluent_localizations_ar.dart';
 import 'fluent_localizations_be.dart';
+import 'fluent_localizations_bn.dart';
 import 'fluent_localizations_cs.dart';
 import 'fluent_localizations_de.dart';
+import 'fluent_localizations_el.dart';
 import 'fluent_localizations_en.dart';
 import 'fluent_localizations_es.dart';
 import 'fluent_localizations_fa.dart';
@@ -28,6 +30,7 @@ import 'fluent_localizations_pt.dart';
 import 'fluent_localizations_ro.dart';
 import 'fluent_localizations_ru.dart';
 import 'fluent_localizations_sv.dart';
+import 'fluent_localizations_th.dart';
 import 'fluent_localizations_tr.dart';
 import 'fluent_localizations_uk.dart';
 import 'fluent_localizations_uz.dart';
@@ -120,8 +123,10 @@ abstract class FluentLocalizations {
     Locale('en'),
     Locale('ar'),
     Locale('be'),
+    Locale('bn'),
     Locale('cs'),
     Locale('de'),
+    Locale('el'),
     Locale('es'),
     Locale('fa'),
     Locale('fr'),
@@ -140,6 +145,7 @@ abstract class FluentLocalizations {
     Locale('ro'),
     Locale('ru'),
     Locale('sv'),
+    Locale('th'),
     Locale('tr'),
     Locale('uk'),
     Locale('uz'),
@@ -348,8 +354,10 @@ class _FluentLocalizationsDelegate
   bool isSupported(Locale locale) => <String>[
         'ar',
         'be',
+        'bn',
         'cs',
         'de',
+        'el',
         'en',
         'es',
         'fa',
@@ -369,6 +377,7 @@ class _FluentLocalizationsDelegate
         'ro',
         'ru',
         'sv',
+        'th',
         'tr',
         'uk',
         'uz',
@@ -398,10 +407,14 @@ FluentLocalizations lookupFluentLocalizations(Locale locale) {
       return FluentLocalizationsAr();
     case 'be':
       return FluentLocalizationsBe();
+    case 'bn':
+      return FluentLocalizationsBn();
     case 'cs':
       return FluentLocalizationsCs();
     case 'de':
       return FluentLocalizationsDe();
+    case 'el':
+      return FluentLocalizationsEl();
     case 'en':
       return FluentLocalizationsEn();
     case 'es':
@@ -440,6 +453,8 @@ FluentLocalizations lookupFluentLocalizations(Locale locale) {
       return FluentLocalizationsRu();
     case 'sv':
       return FluentLocalizationsSv();
+    case 'th':
+      return FluentLocalizationsTh();
     case 'tr':
       return FluentLocalizationsTr();
     case 'uk':

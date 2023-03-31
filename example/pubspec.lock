@@ -127,7 +127,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "4.4.0"
+    version: "4.4.2"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -197,6 +197,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  go_router:
+    dependency: "direct main"
+    description:
+      name: go_router
+      sha256: b4bb06205ec607278b6fc23db238278417bca84a3905779cc68d1eb7afae37e2
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.2.0"
   html:
     dependency: transitive
     description:
@@ -261,6 +269,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.1"
+  logging:
+    dependency: transitive
+    description:
+      name: logging
+      sha256: c0bbfe94d46aedf9b8b3e695cf3bd48c8e14b35e3b2c639e0aa7755d589ba946
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.0"
   macos_window_utils:
     dependency: transitive
     description:
@@ -293,6 +309,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.0"
+  math_expressions:
+    dependency: transitive
+    description:
+      name: math_expressions
+      sha256: "6cec3bb1f5a78701cc25d63705ddfa807062d00bc0d85ba8b2d13daed9fe61c5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.1"
   meta:
     dependency: transitive
     description:
