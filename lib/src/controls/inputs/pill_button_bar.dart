@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use_from_same_package
+
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
 
@@ -10,6 +12,9 @@ const double _kMinButtonWidth = 56.0;
 const double _kMaxButtonHeight = _kMinHeight;
 
 /// The item used by [PillButtonBar]
+@Deprecated(
+  'PillButtonBar is deprecated, use CommandBar instead. This was deprecated in 4.7.0',
+)
 class PillButtonBarItem {
   /// The text
   final Widget text;
@@ -30,19 +35,21 @@ class PillButtonBarItem {
 ///
 ///   * [PillButtonBarItem], the item used by pill button bar
 ///   * [PillButtonBarTheme], used to style the pill button bar
+@Deprecated(
+  'PillButtonBar is deprecated, use CommandBar instead. This was deprecated in 4.7.0',
+)
 class PillButtonBar extends StatelessWidget {
   /// Creates a pill button bar.
   ///
   /// [selected] must be in the range of 0 to [items.length]
   const PillButtonBar({
-    Key? key,
+    super.key,
     required this.items,
     required this.selected,
     this.onChanged,
     this.controller,
   })  : assert(items.length >= 2),
-        assert(selected >= 0 && selected < items.length),
-        super(key: key);
+        assert(selected >= 0 && selected < items.length);
 
   /// The items of the bar. There must be at least 2 items in the list
   final List<PillButtonBarItem> items;
@@ -91,11 +98,10 @@ class PillButtonBar extends StatelessWidget {
 
 class _PillButtonBarItem extends StatelessWidget {
   const _PillButtonBarItem({
-    Key? key,
     required this.item,
     this.selected = false,
     this.onPressed,
-  }) : super(key: key);
+  });
 
   final PillButtonBarItem item;
   final bool selected;
@@ -132,7 +138,7 @@ class _PillButtonBarItem extends StatelessWidget {
               horizontal: _kButtonsSpacing + visualDensity.horizontal,
               vertical: _kButtonsSpacing + visualDensity.vertical,
             ),
-            child: DefaultTextStyle(
+            child: DefaultTextStyle.merge(
               style: (selected
                       ? theme.selectedTextStyle
                       : theme.unselectedTextStyle) ??
@@ -155,14 +161,17 @@ class _PillButtonBarItem extends StatelessWidget {
 ///
 /// Values specified here are used for [PillButtonBar] properties that are not
 /// given an explicit non-null value.
+@Deprecated(
+  'PillButtonBar is deprecated, use CommandBar instead. This was deprecated in 4.7.0',
+)
 class PillButtonBarTheme extends InheritedTheme {
   /// Creates a button theme that controls the configurations for
   /// [PillButtonBar].
   const PillButtonBarTheme({
-    Key? key,
-    required Widget child,
+    super.key,
+    required super.child,
     required this.data,
-  }) : super(key: key, child: child);
+  });
 
   /// The properties for descendant [PillButtonBar] widgets.
   final PillButtonBarThemeData data;

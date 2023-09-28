@@ -6,6 +6,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
+// From https://github.com/microsoft/microsoft-ui-xaml/blob/main/dev/CommonStyles/Common_themeresources.xaml#L18
 const kTextBoxPadding = EdgeInsetsDirectional.fromSTEB(10, 5, 6, 6);
 
 /// Visibility of text field overlays based on the state of the current text entry.
@@ -35,21 +36,20 @@ enum OverlayVisibilityMode {
 class _TextBoxSelectionGestureDetectorBuilder
     extends TextSelectionGestureDetectorBuilder {
   _TextBoxSelectionGestureDetectorBuilder({
-    required _TextBoxState state,
-  })  : _state = state,
-        super(delegate: state);
+    required _TextBoxState super.delegate,
+  }) : _state = delegate;
 
   final _TextBoxState _state;
 
   @override
-  void onSingleTapUp(TapUpDetails details) {
+  void onSingleTapUp(TapDragUpDetails details) {
     super.onSingleTapUp(details);
     _state._requestKeyboard();
     _state.widget.onTap?.call();
   }
 
   @override
-  void onDragSelectionEnd(DragEndDetails details) {
+  void onDragSelectionEnd(TapDragEndDetails details) {
     _state._requestKeyboard();
   }
 }
@@ -81,6 +81,8 @@ class _TextBoxSelectionGestureDetectorBuilder
 /// needed. This will ensure we discard any resources used by the object.
 ///
 /// {@macro flutter.widgets.editableText.showCaretOnScreen}
+///
+/// {@macro flutter.widgets.editableText.accessibility}
 ///
 /// See also:
 ///
@@ -680,7 +682,7 @@ class _TextBoxState extends State<TextBox>
   void initState() {
     super.initState();
     _selectionGestureDetectorBuilder = _TextBoxSelectionGestureDetectorBuilder(
-      state: this,
+      delegate: this,
     );
     if (widget.controller == null) {
       _createLocalController();
@@ -1005,9 +1007,7 @@ class _TextBoxState extends State<TextBox>
         themeData.inactiveColor;
 
     final selectionColor = DefaultSelectionStyle.of(context).selectionColor ??
-        themeData.accentColor
-            .defaultBrushFor(themeData.brightness)
-            .withOpacity(0.2);
+        themeData.accentColor.normal;
 
     // Set configuration as disabled if not otherwise specified. If specified,
     // ensure that configuration uses Fluent text style for misspelled words

@@ -23,7 +23,7 @@ import 'package:flutter/rendering.dart';
 class Slider extends StatefulWidget {
   /// Creates a Slider
   const Slider({
-    Key? key,
+    super.key,
     required this.value,
     required this.onChanged,
     this.onChangeStart,
@@ -38,8 +38,7 @@ class Slider extends StatefulWidget {
     this.autofocus = false,
     this.mouseCursor = MouseCursor.defer,
   })  : assert(value >= min && value <= max),
-        assert(divisions == null || divisions > 0),
-        super(key: key);
+        assert(divisions == null || divisions > 0);
 
   /// The currently selected value for this slider.
   ///
@@ -520,10 +519,10 @@ class SliderTheme extends InheritedTheme {
   /// Creates a slider theme that controls the configurations for
   /// [Slider].
   const SliderTheme({
-    Key? key,
+    super.key,
     required this.data,
-    required Widget child,
-  }) : super(key: key, child: child);
+    required super.child,
+  });
 
   /// The properties for descendant [Slider] widgets.
   final SliderThemeData data;
@@ -579,7 +578,10 @@ class SliderThemeData with Diagnosticable {
   final ButtonState<double?>? thumbRadius;
   final ButtonState<double?>? trackHeight;
 
+  /// The color of the label background
   final Color? labelBackgroundColor;
+
+  /// The color of the label text
   final Color? labelForegroundColor;
 
   final bool? useThumbBall;
@@ -618,7 +620,7 @@ class SliderThemeData with Diagnosticable {
       }),
       margin: EdgeInsets.zero,
       useThumbBall: true,
-      labelBackgroundColor: theme.resources.controlFillColorDefault,
+      labelBackgroundColor: theme.resources.controlSolidFillColorDefault,
       labelForegroundColor: theme.resources.textFillColorPrimary,
       trackHeight: ButtonState.all(3.75),
     );

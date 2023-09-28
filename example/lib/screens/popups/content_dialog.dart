@@ -3,7 +3,7 @@ import 'package:example/widgets/page.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 
 class ContentDialogPage extends StatefulWidget {
-  const ContentDialogPage({Key? key}) : super(key: key);
+  const ContentDialogPage({super.key});
 
   @override
   State<ContentDialogPage> createState() => _ContentDialogPageState();
@@ -25,15 +25,6 @@ class _ContentDialogPageState extends State<ContentDialogPage> with PageMixin {
         ),
         subtitle(content: const Text('A basic content dialog with content')),
         CardHighlight(
-          child: Row(children: [
-            Button(
-              child: const Text('Show dialog'),
-              onPressed: () => showContentDialog(context),
-            ),
-            const SizedBox(width: 10.0),
-            Text(result ?? ''),
-            const Spacer(),
-          ]),
           codeSnippet: '''Button(
   child: const Text('Show dialog'),
   onPressed: () => showContentDialog(context),
@@ -64,6 +55,15 @@ void showContentDialog(BuildContext context) async {
   );
   setState(() {});
 }''',
+          child: Row(children: [
+            Button(
+              child: const Text('Show dialog'),
+              onPressed: () => showContentDialog(context),
+            ),
+            const SizedBox(width: 10.0),
+            Text(result ?? ''),
+            const Spacer(),
+          ]),
         ),
       ],
     );

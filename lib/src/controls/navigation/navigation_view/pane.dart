@@ -98,7 +98,10 @@ class NavigationPane with Diagnosticable {
 
   final Key? key;
 
-  final GlobalKey paneKey = GlobalKey();
+  /// The key for the pane view
+  late final GlobalKey paneKey = GlobalKey(
+    debugLabel: 'NavigationPane paneKey#$displayMode',
+  );
 
   /// Use this property to customize how the pane will be displayed.
   /// [PaneDisplayMode.auto] is used by default.
@@ -341,7 +344,7 @@ class NavigationPane with Diagnosticable {
 /// NavigationView(
 ///   pane: NavigationPane(
 ///     size: NavigationPaneSize(
-///       openWidth: MediaQuery.of(context).size.width / 5,
+///       openWidth: MediaQuery.sizeOf(context).width / 5,
 ///       openMinWidth: 250,
 ///       openMaxWidth: 320,
 ///     ),
@@ -538,7 +541,7 @@ class _TopNavigationPane extends StatefulWidget {
 }
 
 class _TopNavigationPaneState extends State<_TopNavigationPane> {
-  final overflowKey = GlobalKey();
+  final overflowKey = GlobalKey(debugLabel: 'TopNavigationPane overflowKey');
   final overflowController = FlyoutController();
 
   List<int> hiddenPaneItems = [];
@@ -558,6 +561,9 @@ class _TopNavigationPaneState extends State<_TopNavigationPane> {
 
   void _onPressed(PaneItem item) {
     widget.pane.changeTo(item);
+    if (overflowController.isOpen) {
+      Navigator.of(context).pop();
+    }
   }
 
   Widget _buildItem(
@@ -659,7 +665,7 @@ class _TopNavigationPaneState extends State<_TopNavigationPane> {
   @override
   Widget build(BuildContext context) {
     assert(debugCheckHasFluentTheme(context));
-    final view = InheritedNavigationView.of(context);
+    final view = _InheritedNavigationView.of(context);
     final height = widget.pane.size?.topHeight ?? kOneLineTileHeight;
     return SizedBox(
       key: widget.pane.paneKey,
@@ -681,7 +687,6 @@ class _TopNavigationPaneState extends State<_TopNavigationPane> {
             overflowWidget: FlyoutTarget(
               key: overflowKey,
               controller: overflowController,
-              // placement: FlyoutPlacement.end,
               child: PaneItem(
                 icon: const Icon(FluentIcons.more),
                 body: const SizedBox.shrink(),
@@ -693,11 +698,11 @@ class _TopNavigationPaneState extends State<_TopNavigationPane> {
                     placementMode: FlyoutPlacementMode.bottomCenter,
                     forceAvailableSpace: true,
                     builder: (context) {
-                      return InheritedNavigationView(
+                      return _InheritedNavigationView(
                         displayMode: view.displayMode,
                         currentItemIndex: view.currentItemIndex,
                         minimalPaneOpen: view.minimalPaneOpen,
-                        oldIndex: view.oldIndex,
+                        previousItemIndex: view.previousItemIndex,
                         pane: view.pane,
                         child: MenuFlyout(
                           items: _localItemHold
@@ -770,7 +775,7 @@ MenuFlyoutItemBase _buildMenuPaneItem(
     return _MenuFlyoutPaneItemExpander(
       item: item,
       onPressed: () => onPressed(item),
-      onItemPressed: (item) => onPressed(item),
+      onItemPressed: onPressed,
     );
   } else if (item is PaneItem) {
     return _MenuFlyoutPaneItem(
@@ -804,12 +809,11 @@ class _MenuFlyoutHeader extends MenuFlyoutItemBase {
 
 class _MenuFlyoutPaneItem extends MenuFlyoutItemBase {
   _MenuFlyoutPaneItem({
-    Key? key,
     required this.item,
     required this.onPressed,
     this.trailing = const SizedBox.shrink(),
     this.padding,
-  }) : super(key: key);
+  });
 
   final PaneItem item;
   final VoidCallback? onPressed;
@@ -818,14 +822,21 @@ class _MenuFlyoutPaneItem extends MenuFlyoutItemBase {
 
   @override
   Widget build(BuildContext context) {
+    assert(debugCheckHasFluentTheme(context));
     final size = Flyout.of(context).size;
     final theme = NavigationPaneTheme.of(context);
+    final fluentTheme = FluentTheme.of(context);
+    final view = _InheritedNavigationView.of(context);
 
+    final selected = view.pane?.isSelected(item) ?? false;
     final titleText = item.title?.getProperty<String>() ?? '';
     final baseStyle = item.title?.getProperty<TextStyle>() ?? const TextStyle();
 
     return HoverButton(
-      onPressed: onPressed,
+      onPressed: () {
+        item.onTap?.call();
+        onPressed?.call();
+      },
       builder: (context, states) {
         var textStyle = () {
           var style = theme.unselectedTextStyle?.resolve(states);
@@ -865,6 +876,24 @@ class _MenuFlyoutPaneItem extends MenuFlyoutItemBase {
             transparentWhenDisabled: true,
           ),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  vertical: kDefaultListTilePadding.vertical,
+                ),
+                child: Container(
+                  height: 30 * 0.7,
+                  width: 3.0,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(100.0),
+                    color: selected
+                        ? fluentTheme.accentColor
+                            .defaultBrushFor(fluentTheme.brightness)
+                        : Colors.transparent,
+                  ),
+                ),
+              ),
+            ),
             Padding(
               padding: theme.iconPadding ?? EdgeInsets.zero,
               child: IconTheme.merge(
@@ -891,11 +920,10 @@ class _MenuFlyoutPaneItem extends MenuFlyoutItemBase {
 
 class _MenuFlyoutPaneItemExpander extends MenuFlyoutItemBase {
   _MenuFlyoutPaneItemExpander({
-    Key? key,
     required this.item,
     required this.onPressed,
     required this.onItemPressed,
-  }) : super(key: key);
+  });
 
   final PaneItemExpander item;
   final VoidCallback? onPressed;
@@ -1009,6 +1037,7 @@ class _CompactNavigationPane extends StatelessWidget {
     this.listKey,
     this.onToggle,
     this.onOpenSearch,
+    this.onAnimationEnd,
   }) : super(key: pane.key);
 
   final NavigationPane pane;
@@ -1016,9 +1045,11 @@ class _CompactNavigationPane extends StatelessWidget {
   final GlobalKey? listKey;
   final VoidCallback? onToggle;
   final VoidCallback? onOpenSearch;
+  final VoidCallback? onAnimationEnd;
 
-  Widget _buildItem(BuildContext context, NavigationPaneItem item) {
+  static Widget _buildItem(BuildContext context, NavigationPaneItem item) {
     assert(debugCheckHasFluentTheme(context));
+    final pane = _InheritedNavigationView.of(context).pane!;
     if (item is PaneItemHeader) {
       // Item Header is not visible on compact pane
       return const SizedBox();
@@ -1063,6 +1094,7 @@ class _CompactNavigationPane extends StatelessWidget {
       duration: theme.animationDuration ?? Duration.zero,
       curve: theme.animationCurve ?? Curves.linear,
       width: pane.size?.compactWidth ?? kCompactNavigationPaneWidth,
+      onEnd: onAnimationEnd,
       child: Align(
         key: pane.paneKey,
         alignment: AlignmentDirectional.topCenter,
@@ -1076,7 +1108,6 @@ class _CompactNavigationPane extends StatelessWidget {
                 pane,
                 onPressed: () {
                   onToggle?.call();
-                  onOpenSearch?.call();
                 },
                 padding: showReplacement ? EdgeInsets.zero : topPadding,
               );
@@ -1095,6 +1126,7 @@ class _CompactNavigationPane extends StatelessWidget {
                 false,
                 () {
                   onToggle?.call();
+                  onOpenSearch?.call();
                 },
               ),
             ),
@@ -1131,6 +1163,7 @@ class _OpenNavigationPane extends StatefulWidget {
     this.onToggle,
     this.onItemSelected,
     this.initiallyOpen = false,
+    this.onAnimationEnd,
   }) : super(key: pane.key);
 
   final NavigationPane pane;
@@ -1140,13 +1173,18 @@ class _OpenNavigationPane extends StatefulWidget {
   final VoidCallback? onItemSelected;
   final NavigationPaneThemeData theme;
   final bool initiallyOpen;
+  final VoidCallback? onAnimationEnd;
 
   static Widget buildItem(
     BuildContext context,
     NavigationPane pane,
     NavigationPaneItem item, [
     VoidCallback? onChanged,
+    double? width,
   ]) {
+    if (width != null && width < kOpenNavigationPaneWidth / 1.5) {
+      return _CompactNavigationPane._buildItem(context, item);
+    }
     if (item is PaneItemHeader) {
       return item.build(context);
     } else if (item is PaneItemSeparator) {
@@ -1199,16 +1237,12 @@ class _OpenNavigationPaneState extends State<_OpenNavigationPane>
       vsync: this,
       duration: theme.animationDuration,
     );
-    if (widget.initiallyOpen) {
-      controller.value = 1;
-    } else {
-      controller.forward();
-      PageStorage.of(context).writeState(
-        context,
-        true,
-        identifier: 'openModeOpen',
-      );
-    }
+    controller.forward(from: widget.initiallyOpen ? 1 : 0);
+    PageStorage.of(context).writeState(
+      context,
+      true,
+      identifier: 'openModeOpen',
+    );
   }
 
   @override
@@ -1243,17 +1277,15 @@ class _OpenNavigationPaneState extends State<_OpenNavigationPane>
       paneHeaderHeight = -1.0;
     }
 
-    return SizeTransition(
-      axisAlignment: -1,
-      axis: Axis.horizontal,
-      sizeFactor: Tween<double>(begin: 0, end: 1.0).animate(CurvedAnimation(
-        parent: controller,
-        curve: theme.animationCurve ?? Curves.linear,
-      )),
-      child: SizedBox(
-        key: widget.paneKey,
-        width: paneWidth,
-        child: Column(
+    return AnimatedContainer(
+      duration: theme.animationDuration ?? Duration.zero,
+      curve: theme.animationCurve ?? Curves.linear,
+      key: widget.paneKey,
+      width: paneWidth,
+      onEnd: widget.onAnimationEnd,
+      child: LayoutBuilder(builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           key: widget.pane.paneKey,
           children: [
@@ -1274,9 +1306,9 @@ class _OpenNavigationPaneState extends State<_OpenNavigationPane>
                             padding: const EdgeInsetsDirectional.only(
                               start: 8.0,
                             ),
-                            child: DefaultTextStyle(
-                              style: theme.itemHeaderTextStyle ??
-                                  const TextStyle(),
+                            child: DefaultTextStyle.merge(
+                              style: theme.itemHeaderTextStyle,
+                              maxLines: 1,
                               child: widget.pane.header!,
                             ),
                           ),
@@ -1289,13 +1321,28 @@ class _OpenNavigationPaneState extends State<_OpenNavigationPane>
                 }(),
               ),
             if (widget.pane.autoSuggestBox != null)
-              Container(
-                padding: theme.iconPadding ?? EdgeInsets.zero,
-                height: 41.0,
-                alignment: AlignmentDirectional.center,
-                margin: topPadding,
-                child: widget.pane.autoSuggestBox!,
-              ),
+              if (width > kOpenNavigationPaneWidth / 1.5)
+                Container(
+                  padding: theme.iconPadding ?? EdgeInsets.zero,
+                  height: 41.0,
+                  alignment: AlignmentDirectional.center,
+                  margin: topPadding,
+                  child: widget.pane.autoSuggestBox!,
+                )
+              else
+                Padding(
+                  padding: topPadding,
+                  child: PaneItem(
+                    title: Text(FluentLocalizations.of(context).clickToSearch),
+                    icon: widget.pane.autoSuggestBoxReplacement!,
+                    body: const SizedBox.shrink(),
+                  ).build(
+                    context,
+                    false,
+                    () {},
+                    displayMode: PaneDisplayMode.compact,
+                  ),
+                ),
             Expanded(
               child: ListView(
                 shrinkWrap: true,
@@ -1307,6 +1354,7 @@ class _OpenNavigationPaneState extends State<_OpenNavigationPane>
                     widget.pane,
                     item,
                     widget.onItemSelected,
+                    width,
                   );
                 }).toList(),
               ),
@@ -1321,12 +1369,13 @@ class _OpenNavigationPaneState extends State<_OpenNavigationPane>
                   widget.pane,
                   item,
                   widget.onItemSelected,
+                  width,
                 );
               }).toList(),
             ),
           ],
-        ),
-      ),
+        );
+      }),
     );
   }
 }

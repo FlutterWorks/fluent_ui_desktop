@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use_from_same_package
+
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
 
@@ -82,14 +84,17 @@ OverlayEntry showSnackbar(
 /// bottom of the screen. They can contain a custom action or
 /// view or use a style geared towards making special announcements
 /// to your users.
+@Deprecated(
+  'Snackbar is deprecated, use InfoBar instead. This was deprecated in 4.7.0',
+)
 class Snackbar extends StatefulWidget {
   /// Creates a snackbar.
   const Snackbar({
-    Key? key,
+    super.key,
     required this.content,
     this.action,
     this.extended = false,
-  }) : super(key: key);
+  });
 
   /// The content of the snackbar.
   ///
@@ -139,7 +144,7 @@ class SnackbarState extends State<Snackbar>
         constraints: const BoxConstraints(maxWidth: 300.0, minWidth: 32.0),
         decoration: theme.decoration,
         padding: theme.padding,
-        child: DefaultTextStyle(
+        child: DefaultTextStyle.merge(
           style: TextStyle(color: theme.decoration?.color?.basedOnLuminance()),
           child: Flex(
             direction: widget.extended ? Axis.vertical : Axis.horizontal,
@@ -170,23 +175,23 @@ class SnackbarState extends State<Snackbar>
 }
 
 /// An inherited widget that defines the configuration for
-/// [Snackbar]s in this widget's subtree.
+/// Snackbars in this widget's subtree.
 ///
-/// Values specified here are used for [Snackbar] properties that are not
+/// Values specified here are used for Snackbar properties that are not
 /// given an explicit non-null value.
 class SnackbarTheme extends InheritedTheme {
   /// Creates a info bar theme that controls the configurations for
-  /// [Snackbar].
+  /// Snackbar.
   const SnackbarTheme({
-    Key? key,
+    super.key,
     required this.data,
-    required Widget child,
-  }) : super(key: key, child: child);
+    required super.child,
+  });
 
-  /// The properties for descendant [Snackbar] widgets.
+  /// The properties for descendant Snackbar widgets.
   final SnackbarThemeData data;
 
-  /// Creates a button theme that controls how descendant [Snackbar]s should
+  /// Creates a button theme that controls how descendant Snackbars should
   /// look like, and merges in the current toggle button theme, if any.
   static Widget merge({
     Key? key,

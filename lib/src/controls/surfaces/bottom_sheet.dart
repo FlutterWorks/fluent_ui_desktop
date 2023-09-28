@@ -42,7 +42,6 @@ class _BottomSheet extends StatefulWidget {
   /// Typically, bottom sheets are created implicitly by [showBottomSheet],
   /// for modal bottom sheets.
   const _BottomSheet({
-    Key? key,
     this.animationController,
     this.enableDrag = true,
     this.onDragStart,
@@ -52,8 +51,7 @@ class _BottomSheet extends StatefulWidget {
     this.shape,
     required this.onClosing,
     required this.builder,
-  })  : assert(elevation == null || elevation >= 0.0),
-        super(key: key);
+  }) : assert(elevation == null || elevation >= 0.0);
 
   /// The animation controller that controls the bottom sheet's entrance and
   /// exit animations.
@@ -252,14 +250,14 @@ class _ModalBottomSheetLayout extends SingleChildLayoutDelegate {
 
 class _ModalBottomSheet<T> extends StatefulWidget {
   const _ModalBottomSheet({
-    Key? key,
+    super.key,
     this.route,
     this.backgroundColor,
     this.elevation,
     this.shape,
     this.isScrollControlled = false,
     this.enableDrag = true,
-  }) : super(key: key);
+  });
 
   final _ModalBottomSheetRoute<T>? route;
   final bool isScrollControlled;
@@ -305,7 +303,6 @@ class _ModalBottomSheetState<T> extends State<_ModalBottomSheet<T>> {
   Widget build(BuildContext context) {
     assert(debugCheckHasMediaQuery(context));
     assert(debugCheckHasFluentLocalizations(context));
-    final mediaQuery = MediaQuery.of(context);
     final localizations = FluentLocalizations.of(context);
     final routeLabel = _getRouteLabel(localizations);
 
@@ -330,7 +327,7 @@ class _ModalBottomSheetState<T> extends State<_ModalBottomSheet<T>> {
         // Disable the initial animation when accessible navigation is on so
         // that the semantics are added to the tree at the correct time.
         final animationValue = animationCurve.transform(
-          mediaQuery.accessibleNavigation
+          MediaQuery.accessibleNavigationOf(context)
               ? 1.0
               : widget.route!.animation!.value,
         );
@@ -366,9 +363,9 @@ class _ModalBottomSheetRoute<T> extends PopupRoute<T> {
     this.isDismissible = true,
     this.enableDrag = true,
     required this.isScrollControlled,
-    RouteSettings? settings,
+    super.settings,
     this.transitionAnimationController,
-  }) : super(settings: settings);
+  });
 
   final WidgetBuilder? builder;
   final CapturedThemes capturedThemes;
@@ -504,8 +501,8 @@ class _BottomSheetSuspendedCurve extends ParametricCurve<double> {
 /// parameter to true.
 ///
 /// The `useRootNavigator` parameter ensures that the root navigator is used to
-/// display the [BottomSheet] when set to `true`. This is useful in the case
-/// that a modal [BottomSheet] needs to be displayed above all other content
+/// display the BottomSheet when set to `true`. This is useful in the case
+/// that a modal BottomSheet needs to be displayed above all other content
 /// but the caller is inside another [Navigator].
 ///
 /// The [isDismissible] parameter specifies whether the bottom sheet will be
@@ -571,7 +568,7 @@ class _BottomSheetSuspendedCurve extends ParametricCurve<double> {
 /// {@end-tool}
 /// See also:
 ///
-///  * [BottomSheet], a helper widget that implements the fluent ui bottom and top
+///  * BottomSheet, a helper widget that implements the fluent ui bottom and top
 ///    sheet
 ///  * [DraggableScrollableSheet], which allows you to create a bottom sheet
 ///    that grows and then becomes scrollable once it reaches its maximum size.
@@ -617,10 +614,11 @@ class _BottomSheetScrollBehavior extends ScrollBehavior {
   }
 }
 
+@Deprecated('BottomSheet is deprecated. This was deprecated in 4.7.0')
 class BottomSheet extends StatelessWidget {
   /// Creates a bottom sheet.
   const BottomSheet({
-    Key? key,
+    super.key,
     this.header,
     this.showHandle = true,
     this.showDivider,
@@ -636,8 +634,7 @@ class BottomSheet extends StatelessWidget {
         assert(minChildSize >= 0.0),
         assert(maxChildSize <= 1.0),
         assert(minChildSize <= initialChildSize),
-        assert(initialChildSize <= maxChildSize),
-        super(key: key);
+        assert(initialChildSize <= maxChildSize);
 
   /// Whether the handle should be displayed by the bottom sheet.
   /// Defaults to true
@@ -721,8 +718,8 @@ class BottomSheet extends StatelessWidget {
                     horizontal: 16.0,
                     vertical: 12.0,
                   ),
-                  child: DefaultTextStyle(
-                    style: FluentTheme.of(context).typography.caption!,
+                  child: DefaultTextStyle.merge(
+                    style: FluentTheme.of(context).typography.caption,
                     textAlign: TextAlign.center,
                     child: description!,
                   ),
@@ -744,23 +741,23 @@ class BottomSheet extends StatelessWidget {
 }
 
 /// An inherited widget that defines the configuration for
-/// [BottomSheet]s in this widget's subtree.
+/// BottomSheets in this widget's subtree.
 ///
-/// Values specified here are used for [BottomSheet] properties that are not
+/// Values specified here are used for BottomSheet properties that are not
 /// given an explicit non-null value.
 class BottomSheetTheme extends InheritedTheme {
   /// Creates a info bar theme that controls the configurations for
-  /// [BottomSheet].
+  /// BottomSheet.
   const BottomSheetTheme({
-    Key? key,
+    super.key,
     required this.data,
-    required Widget child,
-  }) : super(key: key, child: child);
+    required super.child,
+  });
 
-  /// The properties for descendant [BottomSheet] widgets.
+  /// The properties for descendant BottomSheet widgets.
   final BottomSheetThemeData data;
 
-  /// Creates a button theme that controls how descendant [BottomSheet]s should
+  /// Creates a button theme that controls how descendant BottomSheets should
   /// look like, and merges in the current toggle button theme, if any.
   static Widget merge({
     Key? key,

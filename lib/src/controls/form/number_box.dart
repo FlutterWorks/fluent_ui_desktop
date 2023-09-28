@@ -1,9 +1,10 @@
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 import 'package:math_expressions/math_expressions.dart';
 
 const kNumberBoxOverlayWidth = 60.0;
@@ -159,6 +160,64 @@ class NumberBox<T extends num> extends StatefulWidget {
   ///  * [unfocusedColor], displayed when the field is not focused
   final Color? highlightColor;
 
+  /// The unfocused color of the highlight border.
+  ///
+  /// See also:
+  ///   * [highlightColor], displayed when the field is focused
+  final Color? unfocusedColor;
+
+  /// The style to use for the text being edited.
+  ///
+  /// Also serves as a base for the [placeholder] text's style.
+  ///
+  /// Defaults to the standard font style from [FluentTheme] if null.
+  final TextStyle? style;
+
+  /// {@macro flutter.widgets.editableText.textAlign}
+  final TextAlign? textAlign;
+
+  /// {@macro flutter.widgets.editableText.keyboardType}
+  final TextInputType? keyboardType;
+
+  /// Controls how tall the selection highlight boxes are computed to be.
+  ///
+  /// See [ui.BoxHeightStyle] for details on available styles.
+  final ui.BoxHeightStyle selectionHeightStyle;
+
+  /// Controls how wide the selection highlight boxes are computed to be.
+  ///
+  /// See [ui.BoxWidthStyle] for details on available styles.
+  final ui.BoxWidthStyle selectionWidthStyle;
+
+  /// The appearance of the keyboard.
+  ///
+  /// This setting is only honored on iOS devices.
+  ///
+  /// If null, defaults to the brightness of [FluentThemeData.brightness].
+  final Brightness? keyboardAppearance;
+
+  /// {@macro flutter.widgets.editableText.scrollPadding}
+  final EdgeInsets scrollPadding;
+
+  /// {@macro flutter.widgets.editableText.enableInteractiveSelection}
+  final bool enableInteractiveSelection;
+
+  /// {@macro flutter.widgets.editableText.selectionControls}
+  final TextSelectionControls? selectionControls;
+
+  /// {@macro flutter.widgets.scrollable.dragStartBehavior}
+  final DragStartBehavior dragStartBehavior;
+
+  /// {@macro flutter.widgets.editableText.scrollController}
+  final ScrollController? scrollController;
+
+  /// {@macro flutter.widgets.editableText.scrollPhysics}
+  final ScrollPhysics? scrollPhysics;
+
+  /// {@macro flutter.widgets.editableText.textDirection}
+  final TextDirection? textDirection;
+
+  /// Creates a number box.
   const NumberBox({
     super.key,
     required this.value,
@@ -183,6 +242,20 @@ class NumberBox<T extends num> extends StatefulWidget {
     this.cursorColor,
     this.showCursor,
     this.highlightColor,
+    this.unfocusedColor,
+    this.style,
+    this.textAlign,
+    this.keyboardType = TextInputType.number,
+    this.dragStartBehavior = DragStartBehavior.start,
+    this.enableInteractiveSelection = true,
+    this.keyboardAppearance,
+    this.scrollController,
+    this.scrollPadding = const EdgeInsets.all(20.0),
+    this.scrollPhysics,
+    this.selectionControls,
+    this.selectionHeightStyle = ui.BoxHeightStyle.tight,
+    this.selectionWidthStyle = ui.BoxWidthStyle.tight,
+    this.textDirection,
   });
 
   @override
@@ -282,6 +355,7 @@ class NumberBoxState<T extends num> extends State<NumberBox<T>> {
   void _insertOverlay() {
     _entry = OverlayEntry(builder: (context) {
       assert(debugCheckHasMediaQuery(context));
+      assert(debugCheckHasFluentTheme(context));
 
       final boxContext = _textBoxKey.currentContext;
       if (boxContext == null) return const SizedBox.shrink();
@@ -326,6 +400,7 @@ class NumberBoxState<T extends num> extends State<NumberBox<T>> {
   @override
   Widget build(BuildContext context) {
     assert(debugCheckHasFluentTheme(context));
+    assert(debugCheckHasOverlay(context));
 
     final textFieldSuffix = <Widget>[
       if (widget.clearButton && _hasPrimaryFocus)
@@ -361,6 +436,7 @@ class NumberBoxState<T extends num> extends State<NumberBox<T>> {
       inputFormatters: widget.inputFormatters,
       placeholder: widget.placeholder,
       placeholderStyle: widget.placeholderStyle,
+      showCursor: widget.showCursor,
       cursorColor: widget.cursorColor,
       cursorHeight: widget.cursorHeight,
       cursorRadius: widget.cursorRadius,
@@ -369,10 +445,23 @@ class NumberBoxState<T extends num> extends State<NumberBox<T>> {
       prefix: widget.leadingIcon,
       focusNode: focusNode,
       controller: controller,
-      keyboardType: TextInputType.number,
+      keyboardType: widget.keyboardType,
       enabled: widget.onChanged != null,
       suffix:
           textFieldSuffix.isNotEmpty ? Row(children: textFieldSuffix) : null,
+      unfocusedColor: widget.unfocusedColor,
+      style: widget.style,
+      textAlign: widget.textAlign ?? TextAlign.start,
+      keyboardAppearance: widget.keyboardAppearance,
+      scrollPadding: widget.scrollPadding,
+      scrollController: widget.scrollController,
+      scrollPhysics: widget.scrollPhysics,
+      dragStartBehavior: widget.dragStartBehavior,
+      enableInteractiveSelection: widget.enableInteractiveSelection,
+      selectionControls: widget.selectionControls,
+      selectionHeightStyle: widget.selectionHeightStyle,
+      selectionWidthStyle: widget.selectionWidthStyle,
+      textDirection: widget.textDirection,
     );
 
     return CompositedTransformTarget(
@@ -521,8 +610,10 @@ class _NumberBoxCompactOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    assert(debugCheckHasFluentTheme(context));
+
     return Padding(
-      padding: const EdgeInsets.only(left: 10),
+      padding: const EdgeInsetsDirectional.only(start: 10),
       child: PhysicalModel(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(10),
@@ -565,4 +656,123 @@ class _NumberBoxCompactOverlay extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A [FormField] that contains a [NumberBox].
+///
+/// This is a convenience widget that wraps a [NumberBox] widget in a
+/// [FormField].
+///
+/// A [Form] ancestor is not required. The [Form] simply makes it easier to
+/// save, reset, or validate multiple fields at once. To use without a [Form],
+/// pass a `GlobalKey<FormFieldState>` (see [GlobalKey]) to the constructor and use
+/// [GlobalKey.currentState] to save or reset the form field.
+///
+/// When a [controller] is specified, its [TextEditingController.text]
+/// defines the [initialValue]. If this [FormField] is part of a scrolling
+/// container that lazily constructs its children, like a [ListView] or a
+/// [CustomScrollView], then a [controller] should be specified.
+/// The controller's lifetime should be managed by a stateful widget ancestor
+/// of the scrolling container.
+///
+/// If a [controller] is not specified, [initialValue] can be used to give
+/// the automatically generated controller an initial value.
+///
+/// {@macro flutter.material.textfield.wantKeepAlive}
+///
+/// Remember to call [TextEditingController.dispose] of the [TextEditingController]
+/// when it is no longer needed. This will ensure any resources used by the object
+/// are discarded.
+///
+/// See also:
+///
+///   * [NumberBox], which is the underlying number box without the [Form]
+///    integration.
+///   * <https://docs.microsoft.com/en-us/windows/apps/design/controls/number-box>
+class NumberFormBox<T extends num> extends ControllableFormBox {
+  /// Creates a [FormField] that contains a [NumberBox].
+  ///
+  /// When a [controller] is specified, [initialValue] must be null (the
+  /// default). If [controller] is null, then a [TextEditingController]
+  /// will be constructed automatically and its `text` will be initialized
+  /// to [initialValue] or the empty string.
+  ///
+  /// For documentation about the various parameters, see the [NumberBox] class
+  /// and [NumberBox.new], the constructor.
+  NumberFormBox({
+    super.key,
+    super.autovalidateMode,
+    super.initialValue,
+    super.onSaved,
+    super.restorationId,
+    super.validator,
+    ValueChanged<T?>? onChanged,
+    FocusNode? focusNode,
+    bool autofocus = false,
+    bool? showCursor,
+    double cursorWidth = 2.0,
+    double? cursorHeight,
+    Radius cursorRadius = const Radius.circular(2.0),
+    Color? cursorColor,
+    Color? highlightColor,
+    Color? errorHighlightColor,
+    String? placeholder,
+    TextStyle? placeholderStyle,
+    Widget? leadingIcon,
+    List<TextInputFormatter>? inputFormatters,
+    T? value,
+    bool allowExpressions = false,
+    bool clearButton = true,
+    num largeChange = 10,
+    num smallChange = 1,
+    num? max,
+    num? min,
+    int precision = 2,
+    SpinButtonPlacementMode mode = SpinButtonPlacementMode.compact,
+  }) : super(builder: (FormFieldState<String> field) {
+          assert(debugCheckHasFluentTheme(field.context));
+          final theme = FluentTheme.of(field.context);
+          void onChangedHandler(T? value) {
+            field.didChange(value.toString());
+            onChanged?.call(value);
+          }
+
+          return UnmanagedRestorationScope(
+            bucket: field.bucket,
+            child: FormRow(
+              padding: EdgeInsets.zero,
+              error: (field.errorText == null) ? null : Text(field.errorText!),
+              child: NumberBox<T>(
+                focusNode: focusNode,
+                autofocus: autofocus,
+                showCursor: showCursor,
+                cursorColor: cursorColor,
+                cursorHeight: cursorHeight,
+                cursorRadius: cursorRadius,
+                cursorWidth: cursorWidth,
+                onChanged: onChanged == null ? null : onChangedHandler,
+                highlightColor: (field.errorText == null)
+                    ? highlightColor
+                    : errorHighlightColor ??
+                        Colors.red.defaultBrushFor(theme.brightness),
+                placeholder: placeholder,
+                placeholderStyle: placeholderStyle,
+                leadingIcon: leadingIcon,
+                value: value,
+                max: max,
+                min: min,
+                allowExpressions: allowExpressions,
+                clearButton: clearButton,
+                largeChange: largeChange,
+                smallChange: smallChange,
+                precision: precision,
+                inputFormatters: inputFormatters,
+                mode: mode,
+              ),
+            ),
+          );
+        });
+
+  @override
+  FormFieldState<String> createState() => TextFormBoxState();
 }

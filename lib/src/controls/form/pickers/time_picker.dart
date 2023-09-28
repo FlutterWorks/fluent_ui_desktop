@@ -18,7 +18,7 @@ import 'package:intl/intl.dart';
 class TimePicker extends StatefulWidget {
   /// Creates a time picker.
   const TimePicker({
-    Key? key,
+    super.key,
     required this.selected,
     this.onChanged,
     this.onCancel,
@@ -30,7 +30,7 @@ class TimePicker extends StatefulWidget {
     this.focusNode,
     this.autofocus = false,
     this.minuteIncrement = 1,
-  }) : super(key: key);
+  });
 
   /// The current date selected date.
   ///
@@ -312,7 +312,6 @@ class _TimePickerState extends State<TimePicker>
 
 class _TimePickerContentPopup extends StatefulWidget {
   const _TimePickerContentPopup({
-    Key? key,
     required this.date,
     required this.onChanged,
     required this.onCancel,
@@ -321,7 +320,7 @@ class _TimePickerContentPopup extends StatefulWidget {
     required this.amPmController,
     required this.use24Format,
     required this.minuteIncrement,
-  }) : super(key: key);
+  });
 
   final FixedExtentScrollController hourController;
   final FixedExtentScrollController minuteController;
@@ -424,30 +423,34 @@ class __TimePickerContentPopupState extends State<_TimePickerContentPopup> {
                 child: ListWheelScrollView.useDelegate(
                   controller: widget.hourController,
                   childDelegate: ListWheelChildLoopingListDelegate(
-                    children: List.generate(
-                      hoursAmount,
-                      (index) {
-                        final hour = index + 1;
-                        final realHour = () {
-                          if (!widget.use24Format && localDate.hour > 12) {
-                            return hour + 12;
-                          }
-                          return hour;
-                        }();
-                        return SizedBox(
-                          height: kOneLineTileHeight,
-                          child: Center(
-                            child: Text(
-                              '$hour',
-                              style: kPickerPopupTextStyle(
-                                context,
-                                localDate.hour == realHour,
-                              ),
-                            ),
+                    children: List.generate(hoursAmount, (index) {
+                      final hour = index + 1;
+                      final realHour = () {
+                        if (!widget.use24Format && localDate.hour > 12) {
+                          return hour + 12;
+                        }
+                        return hour;
+                      }();
+                      final selected = localDate.hour == realHour;
+
+                      return ListTile(
+                        onPressed: selected
+                            ? null
+                            : () {
+                                widget.hourController.animateToItem(
+                                  index,
+                                  duration: theme.mediumAnimationDuration,
+                                  curve: theme.animationCurve,
+                                );
+                              },
+                        title: Center(
+                          child: Text(
+                            '$hour',
+                            style: kPickerPopupTextStyle(context, selected),
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    }),
                   ),
                   itemExtent: kOneLineTileHeight,
                   diameterRatio: kPickerDiameterRatio,
@@ -495,15 +498,21 @@ class __TimePickerContentPopupState extends State<_TimePickerContentPopup> {
                       60 ~/ widget.minuteIncrement,
                       (index) {
                         final minute = index * widget.minuteIncrement;
-                        return SizedBox(
-                          height: kOneLineTileHeight,
-                          child: Center(
+                        final selected = minute == localDate.minute;
+                        return ListTile(
+                          onPressed: selected
+                              ? null
+                              : () {
+                                  widget.minuteController.animateToItem(
+                                    index,
+                                    duration: theme.mediumAnimationDuration,
+                                    curve: theme.animationCurve,
+                                  );
+                                },
+                          title: Center(
                             child: Text(
                               '$minute',
-                              style: kPickerPopupTextStyle(
-                                context,
-                                minute == localDate.minute,
-                              ),
+                              style: kPickerPopupTextStyle(context, selected),
                             ),
                           ),
                         );
@@ -552,30 +561,46 @@ class __TimePickerContentPopupState extends State<_TimePickerContentPopup> {
                     itemExtent: kOneLineTileHeight,
                     physics: const FixedExtentScrollPhysics(),
                     children: [
-                      SizedBox(
-                        height: kOneLineTileHeight,
-                        child: Center(
-                          child: Text(
-                            localizations.am,
-                            style: kPickerPopupTextStyle(
-                              context,
-                              localDate.hour < 12,
+                      () {
+                        final selected = localDate.hour < 12;
+                        return ListTile(
+                          onPressed: selected
+                              ? null
+                              : () {
+                                  widget.amPmController.animateToItem(
+                                    0,
+                                    duration: theme.mediumAnimationDuration,
+                                    curve: theme.animationCurve,
+                                  );
+                                },
+                          title: Center(
+                            child: Text(
+                              localizations.am,
+                              style: kPickerPopupTextStyle(context, selected),
                             ),
                           ),
-                        ),
-                      ),
-                      SizedBox(
-                        height: kOneLineTileHeight,
-                        child: Center(
-                          child: Text(
-                            localizations.pm,
-                            style: kPickerPopupTextStyle(
-                              context,
-                              localDate.hour >= 12,
+                        );
+                      }(),
+                      () {
+                        final selected = localDate.hour >= 12;
+                        return ListTile(
+                          onPressed: selected
+                              ? null
+                              : () {
+                                  widget.amPmController.animateToItem(
+                                    1,
+                                    duration: theme.mediumAnimationDuration,
+                                    curve: theme.animationCurve,
+                                  );
+                                },
+                          title: Center(
+                            child: Text(
+                              localizations.pm,
+                              style: kPickerPopupTextStyle(context, selected),
                             ),
                           ),
-                        ),
-                      ),
+                        );
+                      }(),
                     ],
                     onSelectedItemChanged: (index) {
                       // setState(() {});

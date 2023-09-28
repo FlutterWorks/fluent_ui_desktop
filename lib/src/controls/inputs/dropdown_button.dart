@@ -2,10 +2,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
 
 const double _kVerticalOffset = 6.0;
-const Widget _kDefaultDropdownButtonTrailing = Icon(
-  FluentIcons.chevron_down,
-  size: 8.0,
-);
+const Widget _kDefaultDropdownButtonTrailing = ChevronDown();
 
 typedef DropDownButtonBuilder = Widget Function(
   BuildContext context,
@@ -28,7 +25,7 @@ typedef DropDownButtonBuilder = Widget Function(
 class DropDownButton extends StatefulWidget {
   /// Creates a dropdown button.
   const DropDownButton({
-    Key? key,
+    super.key,
     this.buttonBuilder,
     required this.items,
     this.leading,
@@ -45,8 +42,7 @@ class DropDownButton extends StatefulWidget {
     this.onOpen,
     this.onClose,
     this.transitionBuilder = _defaultTransitionBuilder,
-  })  : assert(items.length > 0, 'You must provide at least one item'),
-        super(key: key);
+  }) : assert(items.length > 0, 'You must provide at least one item');
 
   /// A builder for the button. If null, a [Button] with [leading], [title] and
   /// [trailing] is used.
@@ -248,50 +244,53 @@ class DropDownButtonState extends State<DropDownButton> {
     return FlyoutTarget(
       controller: _flyoutController,
       child: Builder(builder: (context) {
-        return widget.buttonBuilder?.call(
-              context,
-              widget.disabled ? null : open,
-            ) ??
-            Button(
-              onPressed: widget.disabled ? null : open,
-              autofocus: widget.autofocus,
-              focusNode: widget.focusNode,
-              child: Builder(builder: (context) {
-                final state = HoverButton.of(context).states;
+        if (widget.buttonBuilder != null) {
+          return widget.buttonBuilder!(
+            context,
+            widget.disabled ? null : open,
+          );
+        }
 
-                return IconTheme.merge(
-                  data: const IconThemeData(size: 20.0),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: _space(<Widget>[
-                      if (widget.leading != null) widget.leading!,
-                      if (widget.title != null) widget.title!,
-                      if (widget.trailing != null)
-                        IconTheme.merge(
-                          data: IconThemeData(
-                            color: state.isDisabled
-                                ? theme.resources.textFillColorDisabled
-                                : state.isPressing
-                                    ? theme.resources.textFillColorTertiary
-                                    : state.isHovering
-                                        ? theme.resources.textFillColorSecondary
-                                        : theme.resources.textFillColorPrimary,
-                          ),
-                          child: AnimatedSlide(
-                            duration: theme.fastAnimationDuration,
-                            curve: Curves.easeInCirc,
-                            offset: state.isPressing
-                                ? const Offset(0, 0.1)
-                                : Offset.zero,
-                            child: widget.trailing!,
-                          ),
-                        ),
-                    ]),
-                  ),
-                );
-              }),
+        return Button(
+          onPressed: widget.disabled ? null : open,
+          autofocus: widget.autofocus,
+          focusNode: widget.focusNode,
+          child: Builder(builder: (context) {
+            final state = HoverButton.of(context).states;
+
+            return IconTheme.merge(
+              data: const IconThemeData(size: 20.0),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: _space(<Widget>[
+                  if (widget.leading != null) widget.leading!,
+                  if (widget.title != null) widget.title!,
+                  if (widget.trailing != null)
+                    IconTheme.merge(
+                      data: IconThemeData(
+                        color: state.isDisabled
+                            ? theme.resources.textFillColorDisabled
+                            : state.isPressing
+                                ? theme.resources.textFillColorTertiary
+                                : state.isHovering
+                                    ? theme.resources.textFillColorSecondary
+                                    : theme.resources.textFillColorPrimary,
+                      ),
+                      child: AnimatedSlide(
+                        duration: theme.fastAnimationDuration,
+                        curve: Curves.easeInCirc,
+                        offset: state.isPressing
+                            ? const Offset(0, 0.1)
+                            : Offset.zero,
+                        child: widget.trailing!,
+                      ),
+                    ),
+                ]),
+              ),
             );
+          }),
+        );
       }),
     );
   }
@@ -323,6 +322,7 @@ class DropDownButtonState extends State<DropDownButton> {
 
     widget.onOpen?.call();
     await _flyoutController.showFlyout(
+      barrierColor: Colors.transparent,
       placementMode: FlyoutPlacementMode.auto,
       autoModeConfiguration: FlyoutAutoConfiguration(
         preferredMode: widget.placement,

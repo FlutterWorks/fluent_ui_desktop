@@ -10,13 +10,13 @@ import 'package:flutter/foundation.dart';
 class FocusBorder extends StatelessWidget {
   /// Creates a focus border.
   const FocusBorder({
-    Key? key,
+    super.key,
     required this.child,
     this.focused = true,
     this.style,
     this.renderOutside,
     this.useStackApproach = true,
-  }) : super(key: key);
+  });
 
   /// The child that will receive the border
   final Widget child;
@@ -75,9 +75,7 @@ class FocusBorder extends StatelessWidget {
   ]) {
     return Builder(builder: (context) {
       return IgnorePointer(
-        child: AnimatedContainer(
-          duration: FluentTheme.of(context).fasterAnimationDuration,
-          curve: FluentTheme.of(context).animationCurve,
+        child: DecoratedBox(
           decoration: style.buildPrimaryDecoration(focused),
           child: DecoratedBox(
             decoration: style.buildSecondaryDecoration(focused),
@@ -119,17 +117,18 @@ class FocusBorder extends StatelessWidget {
 
 class FocusTheme extends InheritedWidget {
   const FocusTheme({
-    Key? key,
+    super.key,
     required this.data,
-    required Widget child,
-  }) : super(key: key, child: child);
+    required super.child,
+  });
 
   final FocusThemeData data;
 
   static FocusThemeData of(BuildContext context) {
     assert(debugCheckHasFluentTheme(context));
     final theme = context.dependOnInheritedWidgetOfExactType<FocusTheme>();
-    return FluentTheme.of(context).focusTheme.merge(theme?.data);
+    return FocusThemeData.fromTheme(FluentTheme.of(context))
+        .merge(FluentTheme.of(context).focusTheme.merge(theme?.data));
   }
 
   @override
@@ -157,16 +156,17 @@ class FocusThemeData with Diagnosticable {
     return FluentTheme.of(context).focusTheme;
   }
 
-  factory FocusThemeData.standard({
-    required Color primaryBorderColor,
-    required Color secondaryBorderColor,
-    required Color glowColor,
-  }) {
+  factory FocusThemeData.fromTheme(FluentThemeData theme) {
     return FocusThemeData(
       borderRadius: BorderRadius.circular(6.0),
-      primaryBorder: BorderSide(width: 2, color: primaryBorderColor),
-      secondaryBorder: BorderSide(color: secondaryBorderColor),
-      glowColor: glowColor,
+      primaryBorder: BorderSide(
+        width: 2,
+        color: theme.resources.focusStrokeColorOuter,
+      ),
+      secondaryBorder: BorderSide(
+        color: theme.resources.focusStrokeColorInner,
+      ),
+      glowColor: theme.accentColor.withOpacity(0.15),
       glowFactor: 0.0,
       renderOutside: true,
     );

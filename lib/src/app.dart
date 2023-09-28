@@ -50,7 +50,7 @@ class FluentApp extends StatefulWidget {
   ///
   /// The boolean arguments, [routes], and [navigatorObservers], must not be null.
   const FluentApp({
-    Key? key,
+    super.key,
     this.navigatorKey,
     this.onGenerateRoute,
     this.onGenerateInitialRoutes,
@@ -80,24 +80,22 @@ class FluentApp extends StatefulWidget {
     this.themeMode,
     this.restorationScopeId,
     this.scrollBehavior = const FluentScrollBehavior(),
-    this.useInheritedMediaQuery = false,
   })  : routeInformationProvider = null,
         routeInformationParser = null,
         routerDelegate = null,
         backButtonDispatcher = null,
-        routerConfig = null,
-        super(key: key);
+        routerConfig = null;
 
   /// Creates a [FluentApp] that uses the [Router] instead of a [Navigator].
   FluentApp.router({
-    Key? key,
+    super.key,
     this.theme,
     this.darkTheme,
     this.themeMode,
     this.routeInformationProvider,
     this.routeInformationParser,
     this.routerDelegate,
-    BackButtonDispatcher? backButtonDispatcher,
+    this.backButtonDispatcher,
     this.routerConfig,
     this.builder,
     this.title = '',
@@ -117,21 +115,35 @@ class FluentApp extends StatefulWidget {
     this.actions,
     this.restorationScopeId,
     this.scrollBehavior = const FluentScrollBehavior(),
-    this.useInheritedMediaQuery = false,
-  })  : assert(routeInformationParser != null && routerDelegate != null ||
-            routerConfig != null),
+  })  : assert(() {
+          if (routerConfig != null) {
+            assert(
+              (routeInformationProvider ??
+                      routeInformationParser ??
+                      routerDelegate ??
+                      backButtonDispatcher) ==
+                  null,
+              'If the routerConfig is provided, all the other router delegates must not be provided',
+            );
+            return true;
+          }
+          assert(routerDelegate != null,
+              'Either one of routerDelegate or routerConfig must be provided');
+          assert(
+            routeInformationProvider == null || routeInformationParser != null,
+            'If routeInformationProvider is provided, routeInformationParser must also be provided',
+          );
+          return true;
+        }()),
         assert(supportedLocales.isNotEmpty),
         navigatorObservers = null,
-        backButtonDispatcher =
-            backButtonDispatcher ?? RootBackButtonDispatcher(),
         navigatorKey = null,
         onGenerateRoute = null,
         home = null,
         onGenerateInitialRoutes = null,
         onUnknownRoute = null,
         routes = null,
-        initialRoute = null,
-        super(key: key);
+        initialRoute = null;
 
   /// Default visual properties, like colors fonts and shapes, for this app's
   /// fluent widgets.
@@ -354,9 +366,6 @@ class FluentApp extends StatefulWidget {
   ///    in a subtree.
   final ScrollBehavior scrollBehavior;
 
-  /// {@macro flutter.widgets.widgetsApp.useInheritedMediaQuery}
-  final bool useInheritedMediaQuery;
-
   @override
   State<FluentApp> createState() => _FluentAppState();
 }
@@ -421,16 +430,32 @@ class _FluentAppState extends State<FluentApp> {
     final themeData = theme(context);
     final mTheme = context.findAncestorWidgetOfExactType<m.Theme>();
 
+    var colorValue = 900;
     return m.AnimatedTheme(
       data: mTheme?.data ??
           m.ThemeData(
+            colorScheme: m.ColorScheme.fromSwatch(
+              primarySwatch: m.MaterialColor(
+                themeData.accentColor.value,
+                themeData.accentColor.swatch.map((key, color) {
+                  colorValue -= 100;
+                  return MapEntry(colorValue, color);
+                }),
+              ),
+              accentColor: themeData.accentColor,
+              errorColor: themeData.resources.systemFillColorCritical,
+              backgroundColor: themeData.resources.controlFillColorDefault,
+              cardColor: themeData.resources.cardBackgroundFillColorDefault,
+              brightness: themeData.brightness,
+            ),
+            primaryColorDark: themeData.accentColor.darker,
             extensions: themeData.extensions.values,
             brightness: themeData.brightness,
             canvasColor: themeData.cardColor,
+            shadowColor: themeData.shadowColor,
+            disabledColor: themeData.resources.controlFillColorDisabled,
             textSelectionTheme: TextSelectionThemeData(
-              selectionColor: themeData.accentColor
-                  .defaultBrushFor(themeData.brightness)
-                  .withOpacity(0.8),
+              selectionColor: themeData.selectionColor,
               cursorColor: themeData.inactiveColor,
             ),
           ),
@@ -486,7 +511,6 @@ class _FluentAppState extends State<FluentApp> {
         actions: widget.actions,
         restorationScopeId: widget.restorationScopeId,
         localizationsDelegates: _localizationsDelegates,
-        useInheritedMediaQuery: widget.useInheritedMediaQuery,
       );
     }
 
@@ -517,7 +541,6 @@ class _FluentAppState extends State<FluentApp> {
       actions: widget.actions,
       restorationScopeId: widget.restorationScopeId,
       localizationsDelegates: _localizationsDelegates,
-      useInheritedMediaQuery: widget.useInheritedMediaQuery,
       pageRouteBuilder: <T>(RouteSettings settings, WidgetBuilder builder) {
         return FluentPageRoute<T>(settings: settings, builder: builder);
       },

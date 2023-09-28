@@ -8,10 +8,10 @@ class FluentTheme extends StatelessWidget {
   ///
   /// The [data] and [child] arguments must not be null.
   const FluentTheme({
-    Key? key,
+    super.key,
     required this.data,
     required this.child,
-  }) : super(key: key);
+  });
 
   /// Specifies the color and typography values for descendant widgets.
   final FluentThemeData data;
@@ -46,10 +46,9 @@ class FluentTheme extends StatelessWidget {
 
 class _FluentTheme extends InheritedTheme {
   const _FluentTheme({
-    Key? key,
     required this.data,
-    required Widget child,
-  }) : super(key: key, child: child);
+    required super.child,
+  });
 
   final FluentThemeData data;
 
@@ -75,8 +74,7 @@ class FluentThemeDataTween extends Tween<FluentThemeData> {
   /// The [begin] and [end] properties must be non-null before the tween is
   /// first used, but the arguments can be null if the values are going to be
   /// filled in later.
-  FluentThemeDataTween({FluentThemeData? begin, FluentThemeData? end})
-      : super(begin: begin, end: end);
+  FluentThemeDataTween({super.begin, super.end});
 
   @override
   FluentThemeData lerp(double t) => FluentThemeData.lerp(begin!, end!, t);
@@ -102,13 +100,13 @@ class AnimatedFluentTheme extends ImplicitlyAnimatedWidget {
   /// By default, the theme transition uses a linear curve. The [data] and
   /// [child] arguments must not be null.
   const AnimatedFluentTheme({
-    Key? key,
+    super.key,
     required this.data,
-    Curve curve = Curves.linear,
-    Duration duration = kThemeAnimationDuration,
-    VoidCallback? onEnd,
+    super.curve,
+    super.duration = kThemeAnimationDuration,
+    super.onEnd,
     required this.child,
-  }) : super(key: key, curve: curve, duration: duration, onEnd: onEnd);
+  });
 
   /// Specifies the color and typography values for descendant widgets.
   final FluentThemeData data;
@@ -174,29 +172,26 @@ extension BrightnessExtension on Brightness {
 
 const standardCurve = Curves.easeInOut;
 
-@Deprecated('ThemeData is deprecated. Use FluentThemeData instead')
-typedef ThemeData = FluentThemeData;
-
 /// Defines the default theme for a [FluentApp] or [FluentTheme].
 @immutable
 class FluentThemeData with Diagnosticable {
   final Typography typography;
   final Map<Object, ThemeExtension<dynamic>> extensions;
 
+  /// The accent color.
+  ///
+  /// Defaults to [Colors.blue]
   final AccentColor accentColor;
   final Color activeColor;
   final Color inactiveColor;
   final Color inactiveBackgroundColor;
-  final Color disabledColor;
   final Color shadowColor;
-  final Color uncheckedColor;
-  final Color checkedColor;
-  final Color borderInputColor;
   final Color scaffoldBackgroundColor;
   final Color acrylicBackgroundColor;
   final Color micaBackgroundColor;
   final Color menuColor;
   final Color cardColor;
+  final Color selectionColor;
 
   final Duration fasterAnimationDuration;
   final Duration fastAnimationDuration;
@@ -221,7 +216,6 @@ class FluentThemeData with Diagnosticable {
   final RadioButtonThemeData radioButtonTheme;
   final ScrollbarThemeData scrollbarTheme;
   final SliderThemeData sliderTheme;
-  final SplitButtonThemeData splitButtonTheme;
   final SnackbarThemeData snackbarTheme;
   final ToggleButtonThemeData toggleButtonTheme;
   final ToggleSwitchThemeData toggleSwitchTheme;
@@ -241,16 +235,13 @@ class FluentThemeData with Diagnosticable {
     Color? activeColor,
     Color? inactiveColor,
     Color? inactiveBackgroundColor,
-    Color? disabledColor,
     Color? scaffoldBackgroundColor,
     Color? acrylicBackgroundColor,
     Color? micaBackgroundColor,
     Color? shadowColor,
-    Color? uncheckedColor,
-    Color? checkedColor,
-    Color? borderInputColor,
     Color? menuColor,
     Color? cardColor,
+    Color? selectionColor,
     Duration? fasterAnimationDuration,
     Duration? fastAnimationDuration,
     Duration? mediumAnimationDuration,
@@ -263,7 +254,6 @@ class FluentThemeData with Diagnosticable {
     ChipThemeData? chipTheme,
     ToggleSwitchThemeData? toggleSwitchTheme,
     IconThemeData? iconTheme,
-    SplitButtonThemeData? splitButtonTheme,
     ContentDialogThemeData? dialogTheme,
     TooltipThemeData? tooltipTheme,
     DividerThemeData? dividerTheme,
@@ -297,30 +287,20 @@ class FluentThemeData with Diagnosticable {
     inactiveColor ??= isLight ? Colors.black : Colors.white;
     inactiveBackgroundColor ??=
         isLight ? const Color(0xFFd6d6d6) : const Color(0xFF292929);
-    disabledColor ??= resources.textFillColorDisabled;
     shadowColor ??= isLight ? Colors.black : Colors.grey[130];
-    scaffoldBackgroundColor ??= resources.layerFillColorDefault;
+    scaffoldBackgroundColor ??= resources.layerOnAcrylicFillColorDefault;
     acrylicBackgroundColor ??= isLight
         ? resources.layerOnAcrylicFillColorDefault
         : const Color(0xFF2c2c2c);
     micaBackgroundColor ??= resources.solidBackgroundFillColorBase;
-    uncheckedColor ??= isLight
-        ? const Color.fromRGBO(0, 0, 0, 0.6063)
-        : const Color.fromRGBO(255, 255, 255, 0.786);
-    checkedColor ??= isLight ? Colors.white : Colors.black;
-    borderInputColor ??= isLight
-        ? const Color.fromRGBO(0, 0, 0, 0.4458)
-        : const Color.fromRGBO(255, 255, 255, 0.5442);
     menuColor ??= isLight ? const Color(0xFFf9f9f9) : const Color(0xFF2c2c2c);
     cardColor ??= resources.cardBackgroundFillColorDefault;
-    typography = Typography.fromBrightness(brightness: brightness)
-        .merge(typography)
-        .apply(fontFamily: fontFamily);
-    focusTheme = FocusThemeData.standard(
-      glowColor: accentColor.withOpacity(0.15),
-      primaryBorderColor: inactiveColor,
-      secondaryBorderColor: scaffoldBackgroundColor,
-    ).merge(focusTheme);
+    selectionColor ??= accentColor.normal;
+    typography = Typography.fromBrightness(
+      brightness: brightness,
+      color: resources.textFillColorPrimary,
+    ).merge(typography).apply(fontFamily: fontFamily);
+    focusTheme ??= const FocusThemeData();
     buttonTheme ??= const ButtonThemeData();
     checkboxTheme ??= const CheckboxThemeData();
     chipTheme ??= const ChipThemeData();
@@ -329,7 +309,6 @@ class FluentThemeData with Diagnosticable {
     iconTheme ??= isLight
         ? const IconThemeData(color: Colors.black, size: 18.0)
         : const IconThemeData(color: Colors.white, size: 18.0);
-    splitButtonTheme ??= const SplitButtonThemeData();
     dialogTheme ??= const ContentDialogThemeData();
     tooltipTheme ??= const TooltipThemeData();
     dividerTheme ??= const DividerThemeData();
@@ -364,14 +343,10 @@ class FluentThemeData with Diagnosticable {
       activeColor: activeColor,
       inactiveColor: inactiveColor,
       inactiveBackgroundColor: inactiveBackgroundColor,
-      disabledColor: disabledColor,
       scaffoldBackgroundColor: scaffoldBackgroundColor,
       acrylicBackgroundColor: acrylicBackgroundColor,
       micaBackgroundColor: micaBackgroundColor,
       shadowColor: shadowColor,
-      uncheckedColor: uncheckedColor,
-      checkedColor: checkedColor,
-      borderInputColor: borderInputColor,
       bottomNavigationTheme: bottomNavigationTheme,
       buttonTheme: buttonTheme,
       checkboxTheme: checkboxTheme,
@@ -385,7 +360,6 @@ class FluentThemeData with Diagnosticable {
       radioButtonTheme: radioButtonTheme,
       scrollbarTheme: scrollbarTheme,
       sliderTheme: sliderTheme,
-      splitButtonTheme: splitButtonTheme,
       toggleButtonTheme: toggleButtonTheme,
       toggleSwitchTheme: toggleSwitchTheme,
       tooltipTheme: tooltipTheme,
@@ -396,6 +370,7 @@ class FluentThemeData with Diagnosticable {
       menuColor: menuColor,
       cardColor: cardColor,
       resources: resources,
+      selectionColor: selectionColor,
     );
   }
 
@@ -406,11 +381,7 @@ class FluentThemeData with Diagnosticable {
     required this.activeColor,
     required this.inactiveColor,
     required this.inactiveBackgroundColor,
-    required this.disabledColor,
     required this.shadowColor,
-    required this.uncheckedColor,
-    required this.checkedColor,
-    required this.borderInputColor,
     required this.fasterAnimationDuration,
     required this.fastAnimationDuration,
     required this.mediumAnimationDuration,
@@ -427,7 +398,6 @@ class FluentThemeData with Diagnosticable {
     required this.toggleSwitchTheme,
     required this.bottomNavigationTheme,
     required this.iconTheme,
-    required this.splitButtonTheme,
     required this.dialogTheme,
     required this.tooltipTheme,
     required this.dividerTheme,
@@ -444,6 +414,7 @@ class FluentThemeData with Diagnosticable {
     required this.menuColor,
     required this.cardColor,
     required this.resources,
+    required this.selectionColor,
   });
 
   static FluentThemeData light() {
@@ -466,7 +437,6 @@ class FluentThemeData with Diagnosticable {
       inactiveColor: Color.lerp(a.inactiveColor, b.inactiveColor, t)!,
       inactiveBackgroundColor:
           Color.lerp(a.inactiveBackgroundColor, b.inactiveBackgroundColor, t)!,
-      disabledColor: Color.lerp(a.disabledColor, b.disabledColor, t)!,
       scaffoldBackgroundColor:
           Color.lerp(a.scaffoldBackgroundColor, b.scaffoldBackgroundColor, t)!,
       acrylicBackgroundColor:
@@ -474,9 +444,6 @@ class FluentThemeData with Diagnosticable {
       micaBackgroundColor:
           Color.lerp(a.micaBackgroundColor, b.micaBackgroundColor, t)!,
       shadowColor: Color.lerp(a.shadowColor, b.shadowColor, t)!,
-      uncheckedColor: Color.lerp(a.uncheckedColor, b.uncheckedColor, t)!,
-      checkedColor: Color.lerp(a.checkedColor, b.checkedColor, t)!,
-      borderInputColor: Color.lerp(a.borderInputColor, b.borderInputColor, t)!,
       cardColor: Color.lerp(a.cardColor, b.cardColor, t)!,
       fasterAnimationDuration:
           lerpDuration(a.fasterAnimationDuration, b.fasterAnimationDuration, t),
@@ -494,8 +461,6 @@ class FluentThemeData with Diagnosticable {
       toggleSwitchTheme: ToggleSwitchThemeData.lerp(
           a.toggleSwitchTheme, b.toggleSwitchTheme, t),
       iconTheme: IconThemeData.lerp(a.iconTheme, b.iconTheme, t),
-      splitButtonTheme:
-          SplitButtonThemeData.lerp(a.splitButtonTheme, b.splitButtonTheme, t),
       dialogTheme: ContentDialogThemeData.lerp(a.dialogTheme, b.dialogTheme, t),
       tooltipTheme: TooltipThemeData.lerp(a.tooltipTheme, b.tooltipTheme, t),
       dividerTheme: DividerThemeData.lerp(a.dividerTheme, b.dividerTheme, t),
@@ -519,6 +484,7 @@ class FluentThemeData with Diagnosticable {
       bottomSheetTheme:
           BottomSheetThemeData.lerp(a.bottomSheetTheme, b.bottomSheetTheme, t),
       menuColor: Color.lerp(a.menuColor, b.menuColor, t)!,
+      selectionColor: Color.lerp(a.selectionColor, b.selectionColor, t)!,
     );
   }
 
@@ -550,16 +516,13 @@ class FluentThemeData with Diagnosticable {
     Color? activeColor,
     Color? inactiveColor,
     Color? inactiveBackgroundColor,
-    Color? disabledColor,
     Color? scaffoldBackgroundColor,
     Color? acrylicBackgroundColor,
     Color? micaBackgroundColor,
     Color? shadowColor,
-    Color? uncheckedColor,
-    Color? checkedColor,
-    Color? borderInputColor,
     Color? menuColor,
     Color? cardColor,
+    Color? selectionColor,
     Duration? fasterAnimationDuration,
     Duration? fastAnimationDuration,
     Duration? mediumAnimationDuration,
@@ -572,7 +535,6 @@ class FluentThemeData with Diagnosticable {
     ChipThemeData? chipTheme,
     ToggleSwitchThemeData? toggleSwitchTheme,
     IconThemeData? iconTheme,
-    SplitButtonThemeData? splitButtonTheme,
     ContentDialogThemeData? dialogTheme,
     TooltipThemeData? tooltipTheme,
     DividerThemeData? dividerTheme,
@@ -598,12 +560,8 @@ class FluentThemeData with Diagnosticable {
       activeColor: activeColor ?? this.activeColor,
       inactiveColor: inactiveColor ?? this.inactiveColor,
       shadowColor: shadowColor ?? this.shadowColor,
-      uncheckedColor: uncheckedColor ?? this.uncheckedColor,
-      checkedColor: checkedColor ?? this.checkedColor,
-      borderInputColor: borderInputColor ?? this.borderInputColor,
       inactiveBackgroundColor:
           inactiveBackgroundColor ?? this.inactiveBackgroundColor,
-      disabledColor: disabledColor ?? this.disabledColor,
       scaffoldBackgroundColor:
           scaffoldBackgroundColor ?? this.scaffoldBackgroundColor,
       acrylicBackgroundColor:
@@ -611,6 +569,7 @@ class FluentThemeData with Diagnosticable {
       micaBackgroundColor: micaBackgroundColor ?? this.micaBackgroundColor,
       menuColor: menuColor ?? this.menuColor,
       cardColor: cardColor ?? this.cardColor,
+      selectionColor: selectionColor ?? this.selectionColor,
       fasterAnimationDuration:
           fasterAnimationDuration ?? this.fasterAnimationDuration,
       fastAnimationDuration:
@@ -636,7 +595,6 @@ class FluentThemeData with Diagnosticable {
       radioButtonTheme: this.radioButtonTheme.merge(radioButtonTheme),
       scrollbarTheme: this.scrollbarTheme.merge(scrollbarTheme),
       sliderTheme: this.sliderTheme.merge(sliderTheme),
-      splitButtonTheme: this.splitButtonTheme.merge(splitButtonTheme),
       toggleButtonTheme: this.toggleButtonTheme.merge(toggleButtonTheme),
       toggleSwitchTheme: this.toggleSwitchTheme.merge(toggleSwitchTheme),
       tooltipTheme: this.tooltipTheme.merge(tooltipTheme),
@@ -653,13 +611,13 @@ class FluentThemeData with Diagnosticable {
       ..add(ColorProperty('activeColor', activeColor))
       ..add(ColorProperty('inactiveColor', inactiveColor))
       ..add(ColorProperty('inactiveBackgroundColor', inactiveBackgroundColor))
-      ..add(ColorProperty('disabledColor', disabledColor))
       ..add(ColorProperty('shadowColor', shadowColor))
       ..add(ColorProperty('scaffoldBackgroundColor', scaffoldBackgroundColor))
       ..add(ColorProperty('acrylicBackgroundColor', acrylicBackgroundColor))
       ..add(ColorProperty('micaBackgroundColor', micaBackgroundColor))
       ..add(ColorProperty('menuColor', menuColor))
       ..add(ColorProperty('cardColor', cardColor))
+      ..add(ColorProperty('selectionColor', selectionColor))
       ..add(EnumProperty('brightness', brightness))
       ..add(DiagnosticsProperty<Duration>(
         'slowAnimationDuration',
