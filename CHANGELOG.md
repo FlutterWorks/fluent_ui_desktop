@@ -1,6 +1,27 @@
-## [next]
+## 4.8.6
 
+* fix: Pop the menu flyout before than calling the close callback ([#1009](https://github.com/bdlukaa/fluent_ui/issues/1009))
+* fix: `Button.child` is now vertically centered ([#1011](https://github.com/bdlukaa/fluent_ui/issues/1011))
+* fix: Adjust `Button`'s foreground color when hovered and pressed ([#1012](https://github.com/bdlukaa/fluent_ui/issues/1012))
+* feat: Added `.textController` and `.onTextChanged` to `EditableComboBox`. ([#1017](https://github.com/bdlukaa/fluent_ui/issues/1017))
+* fix: Do not show the selected indicator on the combo box popup if the current value is not present in the items list.
+
+## 4.8.5
+
+* **MINOR BREAKING** Renamed `NavigationPaneThemeData.standard` to `NavigationPaneThemeData.fromResources`, and removed the `backgroundColor` and `inactiveColor` properties ([#1008](https://github.com/bdlukaa/fluent_ui/issues/1008))
+* fix: Adjust `Slider` animation ([#1006](https://github.com/bdlukaa/fluent_ui/issues/1006))
+
+## 4.8.4
+
+* feat: Added Croatian localization support ([#1004](https://github.com/bdlukaa/fluent_ui/pull/1004))
+* feat: Added Vietnamese localization support ([#1005](https://github.com/bdlukaa/fluent_ui/pull/1005))
+
+## 4.8.3
+
+* fix: Offer a more clear exception info in `PaneItemExpander` ([#990](https://github.com/bdlukaa/fluent_ui/pull/990))
 * fix: `ScaffoldPage.padding` is correctly applied ([#986](https://github.com/bdlukaa/fluent_ui/issues/986))
+* fix: `SliderThemeData.labelForegroundColor` is correctly applied ([#1000](https://github.com/bdlukaa/fluent_ui/issues/1000))
+* feat: `NavigationView.onDisplayModeChanged` ([#998](https://github.com/bdlukaa/fluent_ui/issues/998))
 
 ## 4.8.2
 
