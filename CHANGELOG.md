@@ -1,11 +1,50 @@
-## 4.9.3
+## [next]
 
-- fix : The EditableComboBox is missing the part that applies the style to the TextBox, so add it.
+- fix: Add missing properties (`closeIconSize`, `closeButtonStyle`) in `debugFillProperties` and `InfoBarThemeData.merge` ([#1128](https://github.com/bdlukaa/fluent_ui/issues/1128)
+- feat: Add `TabView.reservedStripWidth`, which adds a minimum empty area between the tabs and the tab view footer ([#1106](https://github.com/bdlukaa/fluent_ui/issues/1106))]
+- fix: Correctly unfocus `NumberBox` when user taps outside ([#1135](https://github.com/bdlukaa/fluent_ui/issues/1135))
+- fix: Do try to scroll Date and Time at build time ([#1117](https://github.com/bdlukaa/fluent_ui/issues/1117))
+- feat: Use a `Decoration` instead of `Color` in `NavigationAppBar` ([#1118](https://github.com/bdlukaa/fluent_ui/issues/1118))
+- feat: Add `EditableComboBox.inputFormatters` ([#1041](https://github.com/bdlukaa/fluent_ui/issues/1041))
+- **BREAKING** feat: `TextBox.decoration` and `TextBox.foregroundDecoration` are now of type `WidgetStateProperty` ([#987](https://github.com/bdlukaa/fluent_ui/pull/987))
+  
+  Before:
+  ```dart
+  TextBox(
+    decoration: BoxDecoration(
+      color: Colors.red,
+    ),
+    foregroundDecoration: BoxDecoration(
+      color: Colors.blue,
+    ),
+  ),
+  ```
+
+  After:
+  ```dart
+  TextBox(
+    decoration: WidgetStateProperty.all(BoxDecoration(
+      color: Colors.red,
+    )),
+    foregroundDecoration: WidgetStateProperty.all(BoxDecoration(
+      color: Colors.blue,
+    )),
+  ),
+  ```
+- feat: Add `TabView.gestures`, which allows the manipulation of the tab gestures ([#1138](https://github.com/bdlukaa/fluent_ui/issues/1138))
+- feat: Add `DropDownButton.style` ([#1139](https://github.com/bdlukaa/fluent_ui/issues/1139))
+- feat: Possibility to open date and time pickers programatically ([#1142](https://github.com/bdlukaa/fluent_ui/issues/1142))
+- fix: `TimePicker` hour offset
 
 ## 4.9.2
 
-- feat: `NavigationAppBar` `leading` widget is now a minimum of `kCompactNavigationPaneWidth` width instead of being fixed to this width ([#1103](https://github.com/bdlukaa/fluent_ui/pull/1103))
+- feat: `NavigationAppBar.leading` now has a minimum width of `kCompactNavigationPaneWidth` instead of being fixed to this width ([#1103](https://github.com/bdlukaa/fluent_ui/pull/1103))
 - feat: Add `TabView.stripBuilder` ([#1106](https://github.com/bdlukaa/fluent_ui/issues/1106))
+- fix: Correctly apply `EditableComboBox.style` ([#1121](https://github.com/bdlukaa/fluent_ui/pull/1121))
+- feat: Add `BreadcrumbBar.chevronIconBuilder` and `BreadcrumbBar.chevronIconSize` ([#1111](https://github.com/bdlukaa/fluent_ui/issues/1111))
+* fix: Consider object translation on Menu Flyouts ([#1104](https://github.com/bdlukaa/fluent_ui/issues/1104))
+* fix: Correctly disable `DropDownButton` items if `onPressed` is not provided ([#1116](https://github.com/bdlukaa/fluent_ui/issues/1116#issuecomment-2347153074))
+* feat: Add `ToggleMenuFlyoutItem` and `RadioMenuFlyoutItem` ([#1108](https://github.com/bdlukaa/fluent_ui/issues/1108))
 
 ## 4.9.1
 
