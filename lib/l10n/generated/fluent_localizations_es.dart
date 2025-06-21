@@ -1,3 +1,5 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
 import 'fluent_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -52,7 +54,7 @@ class FluentLocalizationsEs extends FluentLocalizations {
   String get selectAllActionLabel => 'Seleccionar todo';
 
   @override
-  String get undoActionLabel => 'Undo';
+  String get undoActionLabel => 'Deshacer';
 
   @override
   String get newTabLabel => 'Añadir nueva pestaña';
@@ -85,7 +87,7 @@ class FluentLocalizationsEs extends FluentLocalizations {
   String get selectAllActionTooltip => 'Seleccionar todo el contenido';
 
   @override
-  String get undoActionTooltip => 'Undo the last action';
+  String get undoActionTooltip => 'Deshacer la última acción';
 
   @override
   String get hour => 'hora';
@@ -109,10 +111,10 @@ class FluentLocalizationsEs extends FluentLocalizations {
   String get year => 'año';
 
   @override
-  String get seeMore => 'See more';
+  String get seeMore => 'Ver más';
 
   @override
-  String get seeLess => 'See less';
+  String get seeLess => 'Ver menos';
 
   @override
   String get redLabel => 'Rojo';

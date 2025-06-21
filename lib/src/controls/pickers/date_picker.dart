@@ -1,5 +1,5 @@
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:fluent_ui/src/controls/form/pickers/pickers.dart';
+import 'package:fluent_ui/src/controls/pickers/pickers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
@@ -83,10 +83,10 @@ class DatePicker extends StatefulWidget {
 
   /// Whenever the current selected date is changed by the user.
   ///
-  /// If null, the picker is considered disabled
+  /// If `null`, the picker is considered disabled
   final ValueChanged<DateTime>? onChanged;
 
-  /// Whenever the user cancels the date change.
+  /// Called when the user cancels the picker.
   final VoidCallback? onCancel;
 
   /// The content of the header
@@ -330,16 +330,15 @@ class DatePickerState extends State<DatePicker> {
       child: (context, open) => HoverButton(
         autofocus: widget.autofocus,
         focusNode: widget.focusNode,
-        onPressed: () async {
-          _monthController.dispose();
-          // _monthController = null;
-          _dayController.dispose();
-          // _dayController = null;
-          _yearController.dispose();
-          // _yearController = null;
-          initControllers();
-          await open();
-        },
+        onPressed: widget.onChanged == null
+            ? null
+            : () async {
+                _monthController.dispose();
+                _dayController.dispose();
+                _yearController.dispose();
+                initControllers();
+                await open();
+              },
         builder: (context, states) {
           if (states.isDisabled) states = <WidgetState>{};
           const divider = Divider(
@@ -523,6 +522,16 @@ class __DatePickerContentPopUpState extends State<_DatePickerContentPopUp> {
         widget.dayController.jumpToItem(localDate.day - 1);
       }
     });
+  }
+
+  void onSelect() {
+    Navigator.pop(context);
+    widget.onChanged(localDate);
+  }
+
+  void onDismiss() {
+    Navigator.pop(context);
+    widget.onCancel();
   }
 
   @override
@@ -773,40 +782,35 @@ class __DatePickerContentPopUpState extends State<_DatePickerContentPopUp> {
 
     final fieldMap = widget.fieldOrder.map((e) => fields[e]);
 
-    return Column(children: [
-      Expanded(
-        child: Stack(children: [
-          const PickerHighlightTile(),
-          Row(mainAxisSize: MainAxisSize.min, children: [
-            ...fieldMap.elementAt(0) ?? [],
-            if (fieldMap.elementAt(1) != null) ...[
-              divider,
-              ...fieldMap.elementAt(1)!,
-            ],
-            if (fieldMap.elementAt(2) != null) ...[
-              divider,
-              ...fieldMap.elementAt(2)!,
-            ],
+    return PickerDialog(
+      onSelect: onSelect,
+      onDismiss: onDismiss,
+      child: Column(children: [
+        Expanded(
+          child: Stack(children: [
+            const PickerHighlightTile(),
+            Row(mainAxisSize: MainAxisSize.min, children: [
+              ...fieldMap.elementAt(0) ?? [],
+              if (fieldMap.elementAt(1) != null) ...[
+                divider,
+                ...fieldMap.elementAt(1)!,
+              ],
+              if (fieldMap.elementAt(2) != null) ...[
+                divider,
+                ...fieldMap.elementAt(2)!,
+              ],
+            ]),
           ]),
-        ]),
-      ),
-      const Divider(
-        style: DividerThemeData(
-          verticalMargin: EdgeInsets.zero,
-          horizontalMargin: EdgeInsets.zero,
         ),
-      ),
-      YesNoPickerControl(
-        onChanged: () {
-          Navigator.pop(context);
-          widget.onChanged(localDate);
-        },
-        onCancel: () {
-          Navigator.pop(context);
-          widget.onCancel();
-        },
-      ),
-    ]);
+        const Divider(
+          style: DividerThemeData(
+            verticalMargin: EdgeInsets.zero,
+            horizontalMargin: EdgeInsets.zero,
+          ),
+        ),
+        YesNoPickerControl(onChanged: onSelect, onCancel: onDismiss),
+      ]),
+    );
   }
 }
 
